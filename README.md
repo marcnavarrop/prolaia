@@ -2,7 +2,7 @@
 
 App d'entrenadora personal per a la Laia Millans. Gestiona clients, sessions, exercicis i factures des de qualsevol dispositiu.
 
-🔗 **App:** `https://EL-TEU-USUARI.github.io/prolaia/`
+🔗 **App:** `https://marcnavarrop.github.io/prolaia/`
 
 ---
 
