@@ -499,6 +499,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <button id="sync-btn" onclick="manualSync()" title="Sincronitzar" style="background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;color:#888780;font-size:18px;line-height:1;-webkit-tap-highlight-color:transparent">⟳</button>
       <button onclick="openSessionDrawer()" style="padding:8px 18px;background:#185FA5;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all 0.12s">+ Sessió</button>
       <button onclick="openSettings()" style="width:34px;height:34px;border-radius:50%;background:#3A3A38;border:0.5px solid #5F5E5A;color:#D3D1C7;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center" title="Configuració">⚙</button>
+      <button onclick="openHelp()" style="width:34px;height:34px;border-radius:50%;background:#3A3A38;border:0.5px solid #5F5E5A;color:#D3D1C7;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;font-weight:500" title="Ajuda">?</button>
       <div class="avatar-top">LA</div>
     </div>
   </div>
@@ -4189,6 +4190,91 @@ function refreshAll(){
 // ══════════════════════════════════════
 // SETTINGS DRAWER
 // ══════════════════════════════════════
+function openHelp(){
+  let d=document.getElementById('help-drawer');
+  if(!d){
+    d=document.createElement('div');
+    d.className='drawer';d.id='help-drawer';d.style.display='none';
+    d.innerHTML=`
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">Ajuda</div>
+
+    <div class="drawer-section">Què és ProLaia</div>
+    <p style="font-size:12px;color:#5F5E5A;line-height:1.7;margin-bottom:12px">App d'entrenadora personal per gestionar clients, sessions, exercicis i factures des de qualsevol dispositiu. Les dades es sincronitzen automàticament entre el mòbil i l'ordinador.</p>
+
+    <div class="drawer-section">Les 6 pestanyes</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+      ${[
+        ['🏠','Inici','Resum del dia, sessions d\'avui i estadístiques setmanals.'],
+        ['📅','Agenda','Calendari setmanal. Toca qualsevol dia per veure les sessions. Llisca esquerra/dreta per canviar de dia.'],
+        ['👥','Clients','Fitxes de clients Vindi i BCN. Toca un client per veure el seu historial i dades.'],
+        ['📋','Plantilles','Rutines d\'exercicis reutilitzables. Aplica-les en crear sessions.'],
+        ['💪','Exercicis','Biblioteca completa d\'exercicis organitzats per grups musculars.'],
+        ['🧾','Factures','Resum mensual, preus per tipus de sessió i generació de factura Vindi en PDF.'],
+      ].map(([ico,nom,desc])=>`
+        <div style="background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:9px 12px">
+          <div style="font-size:12px;font-weight:500;color:#2C2C2A;margin-bottom:3px">${ico} ${nom}</div>
+          <div style="font-size:11px;color:#888780;line-height:1.5">${desc}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="drawer-section">Crear una sessió</div>
+    <div style="font-size:12px;color:#5F5E5A;line-height:1.8;margin-bottom:12px">
+      1. Toca <strong>+ Sessió</strong> a dalt<br>
+      2. Tria el tipus (individual / parella / grupal)<br>
+      3. Selecciona el client — el preu s'omple sol<br>
+      4. Tria data i hora amb el selector<br>
+      5. Afegeix exercicis si vols (historial, plantilles o cerca)<br>
+      6. Guarda
+    </div>
+
+    <div class="drawer-section">Estats de les sessions</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#5F5E5A">
+        <span style="background:#EDECEA;border-radius:6px;padding:2px 8px;font-size:11px">pendent</span> Sessió programada, encara no realitzada
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#5F5E5A">
+        <span style="background:#1D9E75;color:#fff;border-radius:6px;padding:2px 8px;font-size:11px">feta</span> Sessió realitzada — toca ✓ a la caixeta
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#5F5E5A">
+        <span style="background:#FCEBEB;color:#A32D2D;border-radius:6px;padding:2px 8px;font-size:11px">cancel.</span> Sessió cancel·lada — toca ✕ a la caixeta
+      </div>
+    </div>
+
+    <div class="drawer-section">Factures Vindi</div>
+    <div style="font-size:12px;color:#5F5E5A;line-height:1.8;margin-bottom:12px">
+      1. Ves a <strong>Factures</strong> → selecciona el mes<br>
+      2. Revisa els preus per tipus de sessió<br>
+      3. Toca <strong>🧾 Generar factura Vindi</strong><br>
+      4. Revisa el resum i toca <strong>↓ Desar i PDF</strong> o <strong>✉️ Desar i enviar</strong>
+    </div>
+
+    <div class="drawer-section">Dades i sincronització</div>
+    <div style="font-size:12px;color:#5F5E5A;line-height:1.7;margin-bottom:12px">
+      Les dades es guarden automàticament al núvol (Supabase) cada vegada que fas un canvi. A dalt a la dreta veuràs:<br><br>
+      <strong>⟳</strong> — tot sincronitzat<br>
+      <strong>✓ verd</strong> — canvis guardats<br>
+      <strong>⚠️ vermell</strong> — sense connexió (es guarda localment i es puja quan torni internet)
+    </div>
+
+    <div class="drawer-section">Còpies de seguretat</div>
+    <div style="font-size:12px;color:#5F5E5A;line-height:1.7;margin-bottom:12px">
+      Es guarden automàticament cada divendres al núvol. Per restaurar una versió anterior: <strong>⚙️ Configuració → Historial de còpies → ↩ Restaurar</strong>.
+    </div>
+
+    <div class="drawer-section">Canviar el PIN</div>
+    <div style="font-size:12px;color:#5F5E5A;line-height:1.7;margin-bottom:16px">
+      <strong>⚙️ Configuració → 🔒 Canviar PIN d'accés</strong>
+    </div>
+
+    <div class="drawer-actions">
+      <button class="btn-sec" onclick="closeDrawer()" style="flex:1">Tancar</button>
+    </div>`;
+    document.getElementById('overlay').appendChild(d);
+  }
+  openDrawer('help-drawer');
+}
+
 function openSettings(){
   loadAndShowSettings();
 }
