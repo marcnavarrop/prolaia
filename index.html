@@ -1059,9 +1059,15 @@ function updatePinDots(){
 function checkPin(){
   if(pinBuffer===getStoredPin()){
     const screen=document.getElementById('pin-screen');
-    screen.style.transition='opacity 0.3s';
-    screen.style.opacity='0';
-    setTimeout(()=>screen.style.display='none',300);
+    const isFirst=!localStorage.getItem('prolaia_welcomed');
+    if(isFirst){
+      localStorage.setItem('prolaia_welcomed','1');
+      showWelcome(screen);
+    } else {
+      screen.style.transition='opacity 0.3s';
+      screen.style.opacity='0';
+      setTimeout(()=>screen.style.display='none',300);
+    }
     sessionStorage.setItem('prolaia_unlocked','1');
   } else {
     document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));
@@ -1073,6 +1079,25 @@ function checkPin(){
     },900);
   }
 }
+function showWelcome(screen){
+  screen.innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;animation:fadeIn 0.5s ease">
+      <div style="font-size:56px">👋</div>
+      <div style="text-align:center">
+        <div style="font-size:26px;font-weight:500;color:#2C2C2A">Benvinguda, Laia!</div>
+        <div style="font-size:14px;color:#888780;margin-top:8px">La teva app d'entrenadora personal</div>
+      </div>
+      <div style="font-size:13px;color:#B4B2A9;margin-top:8px">Preparat per organitzar les teves sessions 💪</div>
+    </div>`;
+  screen.style.opacity='1';
+  screen.style.background='#F0EEE8';
+  setTimeout(()=>{
+    screen.style.transition='opacity 0.5s';
+    screen.style.opacity='0';
+    setTimeout(()=>screen.style.display='none',500);
+  },2200);
+}
+
 // Check if already unlocked this session
 if(sessionStorage.getItem('prolaia_unlocked')==='1'){
   const s=document.getElementById('pin-screen');
