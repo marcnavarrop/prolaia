@@ -1381,14 +1381,58 @@ function getLastFriday(){
   d.setDate(d.getDate()-diff);
   return isoDate(d);
 }
+// ── SUPABASE BACKUPS ──
+async function sbSaveBackup(type){
+  if(window.location.protocol==='file:') return;
+  const data={clients,sessions,invoices,exerciseDB,templates,sessionPrices,
+    counters:{nextClientId,nextSessId,nextInvId,nextInvNum,nextTplId},
+    exportedAt:new Date().toISOString()};
+  const now=new Date();
+  const label=type==='auto'
+    ?'Auto — '+fmtDate(isoDate(now))
+    :'Manual — '+fmtDate(isoDate(now))+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const res=await sbFetch('backups','POST',{label,type,data});
+  if(res!==null){
+    // Keep max 20 backups — delete oldest if exceeded
+    const all=await sbFetch('backups?select=id&order=created_at.desc');
+    if(all&&all.length>20){
+      const toDelete=all.slice(20);
+      for(const b of toDelete) await sbFetch('backups?id=eq.'+b.id,'DELETE');
+    }
+    console.log('Backup saved to Supabase:',label);
+  }
+  return res;
+}
+async function sbLoadBackups(){
+  if(window.location.protocol==='file:') return [];
+  const res=await sbFetch('backups?select=id,label,type,created_at&order=created_at.desc&limit=20');
+  return res||[];
+}
+async function sbRestoreBackup(id){
+  const res=await sbFetch('backups?id=eq.'+id+'&select=data');
+  if(!res||!res.length){toast('⚠ No s\'ha trobat la còpia');return;}
+  const data=res[0].data;
+  clients=data.clients||[];sessions=data.sessions||[];invoices=data.invoices||[];
+  exerciseDB=data.exerciseDB||defaultExerciseDB();
+  templates=data.templates||[];
+  if(data.sessionPrices) Object.assign(sessionPrices,data.sessionPrices);
+  if(data.counters){nextClientId=data.counters.nextClientId;nextSessId=data.counters.nextSessId;
+    nextInvId=data.counters.nextInvId;nextInvNum=data.counters.nextInvNum;nextTplId=data.counters.nextTplId||1;}
+  lsSave();await sbSave();refreshAll();
+  toast('✓ Còpia restaurada correctament');
+}
+
 function saveManualBackup(){
   if(!clients.length&&!sessions.length){toast('No hi ha dades per guardar');return;}
   const data={clients,sessions,invoices,exerciseDB,templates,sessionPrices,counters:{nextClientId,nextSessId,nextInvId,nextInvNum,nextTplId},exportedAt:new Date().toISOString(),manualDate:isoDate(TODAY)};
   try{
     localStorage.setItem('prolaia_manualbackup',JSON.stringify(data));
     localStorage.setItem('prolaia_manualbackup_date',isoDate(TODAY));
-    toast('✓ Còpia manual guardada (' +isoDate(TODAY)+')');
-    openSettings(); // refresh to show it
+    toast('✓ Guardant còpia...');
+    sbSaveBackup('manual').then(()=>{
+      toast('✓ Còpia guardada (local + núvol)');
+      openSettings();
+    });
   }catch(e){toast('⚠ Error guardant: '+e.message);}
 }
 function checkAutoBackup(){
@@ -1402,6 +1446,7 @@ function checkAutoBackup(){
     localStorage.setItem(LS_AUTOBACKUP,JSON.stringify(data));
     localStorage.setItem(LS_AUTOBACKUP_DATE,lastFriday);
     console.log('Auto-backup saved for week of',lastFriday);
+    sbSaveBackup('auto').catch(e=>console.warn('Supabase auto-backup failed:',e));
   }catch(e){console.warn('Auto-backup failed:',e);}
 }
 function downloadAutoBackup(){
@@ -3893,6 +3938,9 @@ function refreshAll(){
 // SETTINGS DRAWER
 // ══════════════════════════════════════
 function openSettings(){
+  loadAndShowSettings();
+}
+async function loadAndShowSettings(){
   let d=document.getElementById('settings-drawer');
   if(!d){
     d=document.createElement('div');
@@ -3956,12 +4004,37 @@ function openSettings(){
       <div style="font-size:11px;font-weight:500;color:#2C2C2A;margin-bottom:6px">Seguretat</div>
       <button class="btn-sec" style="width:100%" onclick="showChangePinDrawer()">🔒 Canviar PIN d'accés</button>
     </div>
+    <div class="drawer-section" style="margin-top:12px">Historial de còpies al núvol</div>
+    <div id="sb-backups-list"><div style="font-size:11px;color:#888780;text-align:center;padding:10px">Carregant...</div></div>
     <div style="margin-top:16px;padding-top:12px;border-top:0.5px solid #D3D1C7;text-align:center">
-      <div style="font-size:11px;color:#888780">ProLaia · Dades guardades al navegador</div>
-      <div style="font-size:10px;color:#B4B2A9;margin-top:3px">Les dades es mantenen fins que s'esborra la memòria del navegador</div>
+      <div style="font-size:11px;color:#888780">ProLaia · Dades guardades al núvol</div>
+      <div style="font-size:10px;color:#B4B2A9;margin-top:3px">Sincronitzat amb Supabase</div>
     </div>
     <div class="drawer-actions"><button class="btn-sec" onclick="closeDrawer()" style="flex:1">Tancar</button></div>`;
   openDrawer('settings-drawer');
+  // Load Supabase backups
+  sbLoadBackups().then(backups=>{
+    const el=document.getElementById('sb-backups-list');
+    if(!el) return;
+    if(!backups.length){
+      el.innerHTML='<div style="font-size:11px;color:#888780;text-align:center;padding:10px">Cap còpia al núvol encara</div>';
+      return;
+    }
+    el.innerHTML=backups.map(b=>{
+      const date=new Date(b.created_at);
+      const dateStr=fmtDate(isoDate(date))+' '+String(date.getHours()).padStart(2,'0')+':'+String(date.getMinutes()).padStart(2,'0');
+      const isAuto=b.type==='auto';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;margin-bottom:5px">'
+        +'<div>'
+        +'<div style="font-size:12px;font-weight:500;color:#2C2C2A">'+(isAuto?'📅 Auto':'💾 Manual')+' — '+dateStr+'</div>'
+        +'</div>'
+        +'<button onclick="confirmRestoreBackup('+b.id+')" style="font-size:11px;padding:4px 10px;background:#E6F1FB;color:#185FA5;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:500">↩ Restaurar</button>'
+        +'</div>';
+    }).join('');
+  });
+}
+function confirmRestoreBackup(id){
+  openConfirm('Restaurar còpia','Segur que vols restaurar aquesta còpia? Les dades actuals es substituiran.','Restaurar',()=>sbRestoreBackup(id));
 }
 
 
