@@ -4231,23 +4231,11 @@ async function loadAndShowSettings(){
   d.innerHTML=`
     <div class="drawer-handle"></div>
     <div class="drawer-title">Configuració</div>
-    <div class="drawer-section">Còpia de seguretat automàtica</div>
-    <div style="font-size:11px;color:#888780;margin-bottom:8px;line-height:1.5">Cada divendres es guarda automàticament una còpia al navegador. Aquí pots descarregar-la.</div>
-    ${abHtml}
-    <div class="drawer-section">Còpia manual addicional</div>
-    <div style="font-size:11px;color:#888780;margin-bottom:8px;line-height:1.5">A banda de l'automàtica setmanal, pots guardar una còpia extra en qualsevol moment.</div>
-    <button class="btn-green" style="width:100%;margin-bottom:8px;padding:10px" onclick="saveManualBackup()">
-      💾 Guardar còpia ara al navegador
+    <div class="drawer-section">Còpies de seguretat</div>
+    <div style="font-size:11px;color:#888780;margin-bottom:8px;line-height:1.5">Les dades es guarden automàticament al núvol (Supabase) cada vegada que fas un canvi i cada divendres. Pots guardar una còpia addicional manualment.</div>
+    <button class="btn-green" style="width:100%;margin-bottom:4px;padding:10px" onclick="saveManualBackup()">
+      ☁️ Guardar còpia manual al núvol
     </button>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:4px">
-      <button class="btn-sec" style="text-align:left;padding:10px 13px" onclick="exportData()">
-        <span style="font-size:14px">💾</span> Descarregar còpia ara
-        <span style="font-size:10px;color:#888780;margin-left:4px">(text, es copia al porta-retalls)</span>
-      </button>
-      <button class="btn-sec" style="text-align:left;padding:10px 13px" onclick="showPasteRestore()">
-        <span style="font-size:14px">📋</span> Restaurar des de còpia
-      </button>
-    </div>
     <div style="background:#FCEBEB;border:0.5px solid #F7C1C1;border-radius:8px;padding:10px 13px;margin-top:12px">
       <div style="font-size:11px;font-weight:500;color:#A32D2D;margin-bottom:6px">Zona de perill</div>
       <button class="btn-danger" style="width:100%" onclick="resetAllData();closeDrawer()">Esborrar totes les dades</button>
