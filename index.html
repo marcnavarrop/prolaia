@@ -413,6 +413,18 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);background:#2C2C2A;color:#F0EEE8;font-size:13px;padding:9px 18px;border-radius:20px;z-index:300;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @keyframes spin{to{transform:rotate(360deg)}}
+.tp-drum{height:180px;overflow:hidden;position:relative;flex:1;cursor:grab}
+.tp-drum:active{cursor:grabbing}
+.tp-drum-inner{display:flex;flex-direction:column;transition:transform 0.15s ease}
+.tp-drum-item{height:44px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:400;color:#B4B2A9;transition:all 0.1s;flex-shrink:0}
+.tp-drum-item.selected{font-size:26px;font-weight:500;color:#2C2C2A}
+.tp-drum-item.near{font-size:18px;color:#5F5E5A}
+.tp-fade-top,.tp-fade-bot{position:absolute;left:0;right:0;pointer-events:none;z-index:2;height:68px}
+.tp-fade-top{top:0;background:linear-gradient(to bottom,#F8F6F2 0%,transparent 100%)}
+.tp-fade-bot{bottom:0;background:linear-gradient(to top,#F8F6F2 0%,transparent 100%)}
+.tp-selector-line{position:absolute;left:0;right:0;top:50%;pointer-events:none;z-index:1}
+.tp-selector-line::before,.tp-selector-line::after{content:'';position:absolute;left:12px;right:12px;height:1.5px;background:#185FA5}
+.tp-selector-line::before{top:-22px}.tp-selector-line::after{top:22px}
 </style>
 </head>
 <body>
@@ -441,6 +453,31 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <button class="pin-key" onclick="pinDel()">⌫</button>
   </div>
   <div style="margin-top:28px;font-size:11px;color:#B4B2A9">Pots canviar el PIN des de Configuració</div>
+</div>
+<!-- TIME PICKER MODAL -->
+<div id="time-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9990;align-items:flex-end;justify-content:center">
+  <div style="background:#F8F6F2;border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:0 0 24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 12px">
+      <button onclick="closeTimePicker()" style="background:none;border:none;font-size:13px;color:#888780;cursor:pointer;font-family:inherit;padding:0">Cancel·lar</button>
+      <div style="font-size:14px;font-weight:500;color:#2C2C2A">Hora d'inici</div>
+      <button onclick="confirmTimePicker()" style="background:none;border:none;font-size:13px;color:#185FA5;font-weight:600;cursor:pointer;font-family:inherit;padding:0">Confirmar</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:0;padding:0 20px;position:relative">
+      <div class="tp-drum" id="tp-hours">
+        <div class="tp-fade-top"></div>
+        <div class="tp-fade-bot"></div>
+        <div class="tp-selector-line"></div>
+        <div class="tp-drum-inner" id="tp-hours-inner"></div>
+      </div>
+      <div style="font-size:26px;font-weight:500;color:#2C2C2A;padding:0 4px;flex-shrink:0">:</div>
+      <div class="tp-drum" id="tp-mins">
+        <div class="tp-fade-top"></div>
+        <div class="tp-fade-bot"></div>
+        <div class="tp-selector-line"></div>
+        <div class="tp-drum-inner" id="tp-mins-inner"></div>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- OFFLINE BAR -->
 <div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9998;background:#E24B4A;color:#fff;font-size:12px;font-weight:500;padding:7px 16px;align-items:center;justify-content:center;gap:6px">
@@ -742,7 +779,13 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <div class="drawer-section">Data i hora</div>
     <div class="field-row">
       <div class="field"><label>Data</label><input id="sf-data" type="date"></div>
-      <div class="field"><label>Hora inici</label><input id="sf-hora" type="time" value="09:00"></div>
+      <div class="field"><label>Hora inici</label>
+        <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:15px;font-weight:500;color:#2C2C2A;min-height:36px">
+          <span id="sf-hora-display">09:00</span>
+          <span style="font-size:12px;color:#888780">▾</span>
+        </div>
+        <input type="hidden" id="sf-hora" value="09:00">
+      </div>
     </div>
     <div class="field-row">
       <div class="field"><label>Durada</label><select id="sf-durada"><option>30 min</option><option>45 min</option><option selected>60 min</option><option>90 min</option></select></div>
@@ -1034,7 +1077,133 @@ const LS={
   PRICES:'laiapro_prices',
 };
 
-// ── PIN AUTH ──
+// ── TIME PICKER ──
+let tpTargetId=null;
+let tpHour=9,tpMin=0;
+const ITEM_H=44;
+
+function openTimePicker(targetId){
+  tpTargetId=targetId;
+  const cur=document.getElementById(targetId).value||'09:00';
+  const [h,m]=cur.split(':').map(Number);
+  tpHour=h;tpMin=m;
+  buildDrum('tp-hours-inner',24,tpHour);
+  buildDrum('tp-mins-inner',60,tpMin,5);
+  const modal=document.getElementById('time-picker-modal');
+  modal.style.display='flex';
+  requestAnimationFrame(()=>{modal.style.opacity='1';});
+  initDrumScroll('tp-hours',24,v=>{tpHour=v;},1);
+  initDrumScroll('tp-mins',60,v=>{tpMin=v;},5);
+}
+
+function buildDrum(innerId,total,selected,step){
+  step=step||1;
+  const inner=document.getElementById(innerId);
+  inner.innerHTML='';
+  // Add 2 padding items top and bottom
+  for(let i=0;i<2;i++){const d=document.createElement('div');d.className='tp-drum-item';inner.appendChild(d);}
+  const items=[];
+  for(let i=0;i<total;i+=step){
+    const d=document.createElement('div');
+    d.className='tp-drum-item';
+    d.textContent=String(i).padStart(2,'0');
+    d.dataset.val=i;
+    inner.appendChild(d);
+    items.push(d);
+  }
+  for(let i=0;i<2;i++){const d=document.createElement('div');d.className='tp-drum-item';inner.appendChild(d);}
+  // Scroll to selected
+  const idx=items.findIndex(d=>parseInt(d.dataset.val)===selected);
+  inner.style.transition='none';
+  inner.style.transform='translateY(-'+(idx*ITEM_H)+'px)';
+  updateDrumHighlight(inner,idx);
+}
+
+function updateDrumHighlight(inner,idx){
+  inner.querySelectorAll('.tp-drum-item[data-val]').forEach((d,i)=>{
+    const dist=Math.abs(i-idx);
+    d.classList.toggle('selected',dist===0);
+    d.classList.toggle('near',dist===1);
+  });
+}
+
+function initDrumScroll(drumId,total,onChange,step){
+  step=step||1;
+  const drum=document.getElementById(drumId);
+  const inner=drum.querySelector('.tp-drum-inner');
+  const items=[...inner.querySelectorAll('[data-val]')];
+  const count=items.length;
+  let startY=0,startOffset=0,currentIdx=items.findIndex(d=>d.classList.contains('selected'));
+
+  function getOffset(){
+    const t=inner.style.transform;
+    const m=t.match(/-?([\d.]+)px/);
+    return m?-parseFloat(m[1]):0;
+  }
+  function snapToIdx(idx){
+    idx=Math.max(0,Math.min(count-1,idx));
+    inner.style.transition='transform 0.2s ease';
+    inner.style.transform='translateY(-'+(idx*ITEM_H)+'px)';
+    currentIdx=idx;
+    onChange(parseInt(items[idx].dataset.val));
+    updateDrumHighlight(inner,idx);
+  }
+
+  drum.addEventListener('touchstart',e=>{
+    startY=e.touches[0].clientY;
+    startOffset=getOffset();
+    inner.style.transition='none';
+  },{passive:true});
+  drum.addEventListener('touchmove',e=>{
+    const dy=e.touches[0].clientY-startY;
+    const newOffset=Math.max(-(count-1)*ITEM_H,Math.min(0,startOffset+dy));
+    inner.style.transform='translateY('+newOffset+'px)';
+    const idx=Math.round(-newOffset/ITEM_H);
+    updateDrumHighlight(inner,Math.max(0,Math.min(count-1,idx)));
+    e.preventDefault();
+  },{passive:false});
+  drum.addEventListener('touchend',e=>{
+    const dy=e.changedTouches[0].clientY-startY;
+    const newOffset=startOffset+dy;
+    const idx=Math.round(-newOffset/ITEM_H);
+    snapToIdx(idx);
+  },{passive:true});
+
+  // Mouse support for desktop
+  drum.addEventListener('mousedown',e=>{
+    startY=e.clientY;startOffset=getOffset();inner.style.transition='none';
+    const onMove=ev=>{
+      const dy=ev.clientY-startY;
+      const o=Math.max(-(count-1)*ITEM_H,Math.min(0,startOffset+dy));
+      inner.style.transform='translateY('+o+'px)';
+      updateDrumHighlight(inner,Math.max(0,Math.min(count-1,Math.round(-o/ITEM_H))));
+    };
+    const onUp=ev=>{
+      document.removeEventListener('mousemove',onMove);
+      document.removeEventListener('mouseup',onUp);
+      const dy=ev.clientY-startY;
+      snapToIdx(Math.round(-(startOffset+dy)/ITEM_H));
+    };
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+    e.preventDefault();
+  });
+}
+
+function confirmTimePicker(){
+  const val=String(tpHour).padStart(2,'0')+':'+String(tpMin).padStart(2,'0');
+  if(tpTargetId){
+    document.getElementById(tpTargetId).value=val;
+    const disp=document.getElementById(tpTargetId+'-display');
+    if(disp) disp.textContent=val;
+  }
+  closeTimePicker();
+}
+function closeTimePicker(){
+  document.getElementById('time-picker-modal').style.display='none';
+}
+
+
 const DEFAULT_PIN='1234';
 let pinBuffer='';
 function getStoredPin(){return localStorage.getItem('prolaia_pin')||DEFAULT_PIN;}
@@ -2436,6 +2605,8 @@ function openSessionDrawer(preClientId){
   selSessType('individual');
   document.getElementById('sf-data').value=selectedDate||isoDate(TODAY);
   document.getElementById('sf-hora').value='09:00';
+  const sfHoraDisp=document.getElementById('sf-hora-display');
+  if(sfHoraDisp) sfHoraDisp.textContent='09:00';
   document.getElementById('sf-notes').value='';
   document.getElementById('sf-preu').value=getSessionPrice('vindi','individual').toFixed(2);
   // Reset exercise panel
