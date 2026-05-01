@@ -241,6 +241,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 .field input:focus,.field select:focus,.field textarea:focus{border-color:#888780}
 .field textarea{resize:vertical;min-height:72px;line-height:1.5}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field-time-btn,.field input[type=date]{height:37px !important;box-sizing:border-box}
 .days-check{display:flex;gap:6px;flex-wrap:wrap}
 .day-check{display:flex;align-items:center;gap:4px;cursor:pointer}
 .day-check input{width:14px;height:14px;accent-color:#185FA5;cursor:pointer}
@@ -781,7 +782,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <!-- Client history (auto-appears when 1 client selected) -->
     <div id="sf-client-history" style="display:none;margin-top:8px"></div>
     <div class="drawer-section">Data i hora</div>
-    <div class="field-row">
+    <div class="field-row field-row-time">
       <div class="field"><label>Data</label><input id="sf-data" type="date" style="width:100%"></div>
       <div class="field"><label>Hora inici</label>
         <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" class="field-time-btn">
