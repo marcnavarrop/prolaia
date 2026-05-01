@@ -237,6 +237,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 .field{margin-bottom:9px}
 .field label{display:block;font-size:11px;color:#5F5E5A;margin-bottom:4px;font-weight:500}
 .field input,.field select,.field textarea{width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #D3D1C7;border-radius:8px;background:#fff;color:#2C2C2A;font-family:inherit;outline:none}
+.field-time-btn{width:100%;padding:8px 10px;font-size:13px;border:0.5px solid #D3D1C7;border-radius:8px;background:#fff;color:#2C2C2A;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;justify-content:center}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:#888780}
 .field textarea{resize:vertical;min-height:72px;line-height:1.5}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -462,16 +463,16 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     </div>
     <div style="display:flex;align-items:center;justify-content:center;gap:0;padding:0 20px;position:relative">
       <div class="tp-drum" id="tp-hours">
-        <div style="position:absolute;left:0;right:0;top:68px;height:44px;border-top:1.5px solid #185FA5;border-bottom:1.5px solid #185FA5;pointer-events:none;z-index:3"></div>
         <div class="tp-fade-top"></div>
         <div class="tp-fade-bot"></div>
+        <div style="position:absolute;left:0;right:0;top:calc(50% - 22px);height:44px;border-top:1.5px solid #185FA5;border-bottom:1.5px solid #185FA5;pointer-events:none;z-index:3;box-sizing:border-box"></div>
         <div class="tp-drum-inner" id="tp-hours-inner"></div>
       </div>
       <div style="font-size:26px;font-weight:500;color:#2C2C2A;padding:0 4px;flex-shrink:0">:</div>
       <div class="tp-drum" id="tp-mins">
-        <div style="position:absolute;left:0;right:0;top:68px;height:44px;border-top:1.5px solid #185FA5;border-bottom:1.5px solid #185FA5;pointer-events:none;z-index:3"></div>
         <div class="tp-fade-top"></div>
         <div class="tp-fade-bot"></div>
+        <div style="position:absolute;left:0;right:0;top:calc(50% - 22px);height:44px;border-top:1.5px solid #185FA5;border-bottom:1.5px solid #185FA5;pointer-events:none;z-index:3;box-sizing:border-box"></div>
         <div class="tp-drum-inner" id="tp-mins-inner"></div>
       </div>
     </div>
@@ -783,8 +784,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <div class="field-row">
       <div class="field"><label>Data</label><input id="sf-data" type="date" style="width:100%"></div>
       <div class="field"><label>Hora inici</label>
-        <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" style="display:flex;align-items:center;justify-content:center;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:0 12px;cursor:pointer;font-size:14px;color:#2C2C2A;width:100%;box-sizing:border-box;height:36px;text-align:center">
-          <span id="sf-hora-display" style="flex:1;text-align:center">09:00</span>
+        <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" class="field-time-btn">
+          <span id="sf-hora-display">09:00</span>
         </div>
         <input type="hidden" id="sf-hora" value="09:00">
       </div>
@@ -1102,8 +1103,16 @@ function buildDrum(innerId,total,selected,step){
   step=step||1;
   const inner=document.getElementById(innerId);
   inner.innerHTML='';
-  // Add 2 padding items top and bottom
-  for(let i=0;i<2;i++){const d=document.createElement('div');d.className='tp-drum-item';inner.appendChild(d);}
+  // Padding: drum is 180px, item is 44px, center is at 90px
+  // So we need 90/44 ≈ 2 padding items at top (2×44=88px, close enough)
+  // Use 2 padding items — selected item center will be at 88+22=110px... 
+  // Actually: with translateY(-idx*44), item 0 sits at top of inner
+  // The drum shows the area from 0 to 180px of inner
+  // We want selected item center at drum center (90px)
+  // So: inner offset = -(idx * 44) and item center = padding*44 + idx*44 + 22 - offset = padding*44 + 22
+  // We want that = 90, so padding = (90-22)/44 = 68/44 ≈ 1.5 → use 2 padding items but offset by -2px
+  const PADDING=2;
+  for(let i=0;i<PADDING;i++){const d=document.createElement('div');d.className='tp-drum-item';inner.appendChild(d);}
   const items=[];
   for(let i=0;i<total;i+=step){
     const d=document.createElement('div');
@@ -1113,10 +1122,16 @@ function buildDrum(innerId,total,selected,step){
     inner.appendChild(d);
     items.push(d);
   }
-  for(let i=0;i<2;i++){const d=document.createElement('div');d.className='tp-drum-item';inner.appendChild(d);}
-  // Scroll to selected
+  for(let i=0;i<PADDING;i++){const d=document.createElement('div');d.className='tp-drum-item';inner.appendChild(d);}
   const idx=items.findIndex(d=>parseInt(d.dataset.val)===selected);
+  // Offset: selected item top = PADDING*44 after translateY(-(idx*44))
+  // = PADDING*44 + idx*44 - idx*44 = PADDING*44 = 88px → center at 110px
+  // We want center at 90px (half of 180px drum)
+  // So subtract extra: 110-90=20px extra → translateY(-(idx*44 + 20))
+  // But simpler: make drum height 176px so center = 88px = padding center ✓
+  // Even simpler: just use negative margin-top on inner to shift up by 20px
   inner.style.transition='none';
+  inner.style.marginTop='-20px';
   inner.style.transform='translateY(-'+(idx*ITEM_H)+'px)';
   updateDrumHighlight(inner,idx);
 }
@@ -1145,6 +1160,7 @@ function initDrumScroll(drumId,total,onChange,step){
   function snapToIdx(idx){
     idx=Math.max(0,Math.min(count-1,idx));
     inner.style.transition='transform 0.2s ease';
+    inner.style.marginTop='-20px';
     inner.style.transform='translateY(-'+(idx*ITEM_H)+'px)';
     currentIdx=idx;
     onChange(parseInt(items[idx].dataset.val));
