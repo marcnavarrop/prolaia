@@ -241,7 +241,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 .field input:focus,.field select:focus,.field textarea:focus{border-color:#888780}
 .field textarea{resize:vertical;min-height:72px;line-height:1.5}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.field-time-btn,.field input[type=date]{height:37px !important;box-sizing:border-box}
+
 .days-check{display:flex;gap:6px;flex-wrap:wrap}
 .day-check{display:flex;align-items:center;gap:4px;cursor:pointer}
 .day-check input{width:14px;height:14px;accent-color:#185FA5;cursor:pointer}
@@ -782,12 +782,10 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <!-- Client history (auto-appears when 1 client selected) -->
     <div id="sf-client-history" style="display:none;margin-top:8px"></div>
     <div class="drawer-section">Data i hora</div>
-    <div class="field-row field-row-time">
-      <div class="field"><label>Data</label><input id="sf-data" type="date" style="width:100%"></div>
+    <div class="field-row">
+      <div class="field"><label>Data</label><input id="sf-data" type="date"></div>
       <div class="field"><label>Hora inici</label>
-        <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" class="field-time-btn">
-          <span id="sf-hora-display">09:00</span>
-        </div>
+        <input id="sf-hora-display-input" readonly onclick="openTimePicker('sf-hora')" value="09:00" style="cursor:pointer;text-align:center" placeholder="09:00">
         <input type="hidden" id="sf-hora" value="09:00">
       </div>
     </div>
@@ -1213,8 +1211,11 @@ function confirmTimePicker(){
   const val=String(tpHour).padStart(2,'0')+':'+String(tpMin).padStart(2,'0');
   if(tpTargetId){
     document.getElementById(tpTargetId).value=val;
-    const disp=document.getElementById(tpTargetId+'-display');
-    if(disp) disp.textContent=val;
+    // Update visible input (sf-hora-display-input)
+    const disp=document.getElementById(tpTargetId+'-display-input');
+    if(disp) disp.value=val;
+    const disp2=document.getElementById(tpTargetId+'-display');
+    if(disp2) disp2.textContent=val;
   }
   closeTimePicker();
 }
@@ -2623,8 +2624,10 @@ function openSessionDrawer(preClientId){
   selSessType('individual');
   document.getElementById('sf-data').value=selectedDate||isoDate(TODAY);
   document.getElementById('sf-hora').value='09:00';
-  const sfHoraDisp=document.getElementById('sf-hora-display');
-  if(sfHoraDisp) sfHoraDisp.textContent='09:00';
+  const sfHoraDisp=document.getElementById('sf-hora-display-input');
+  if(sfHoraDisp) sfHoraDisp.value='09:00';
+  const sfHoraDisp2=document.getElementById('sf-hora-display');
+  if(sfHoraDisp2) sfHoraDisp2.textContent='09:00';
   document.getElementById('sf-notes').value='';
   document.getElementById('sf-preu').value=getSessionPrice('vindi','individual').toFixed(2);
   // Reset exercise panel
