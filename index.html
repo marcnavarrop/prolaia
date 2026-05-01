@@ -422,9 +422,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 .tp-fade-top,.tp-fade-bot{position:absolute;left:0;right:0;pointer-events:none;z-index:2;height:68px}
 .tp-fade-top{top:0;background:linear-gradient(to bottom,#F8F6F2 0%,transparent 100%)}
 .tp-fade-bot{bottom:0;background:linear-gradient(to top,#F8F6F2 0%,transparent 100%)}
-.tp-selector-line{position:absolute;left:0;right:0;top:50%;pointer-events:none;z-index:1}
-.tp-selector-line::before,.tp-selector-line::after{content:'';position:absolute;left:12px;right:12px;height:1.5px;background:#185FA5}
-.tp-selector-line::before{top:-22px}.tp-selector-line::after{top:22px}
+.tp-selector-line{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);pointer-events:none;z-index:1;height:44px;border-top:1.5px solid #185FA5;border-bottom:1.5px solid #185FA5;margin:0 12px}
 </style>
 </head>
 <body>
@@ -783,9 +781,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <div id="sf-client-history" style="display:none;margin-top:8px"></div>
     <div class="drawer-section">Data i hora</div>
     <div class="field-row">
-      <div class="field"><label>Data</label><input id="sf-data" type="date"></div>
+      <div class="field"><label>Data</label><input id="sf-data" type="date" style="width:100%"></div>
       <div class="field"><label>Hora inici</label>
-        <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:0 10px;cursor:pointer;font-size:14px;font-weight:400;color:#2C2C2A;height:34px;box-sizing:border-box">
+        <div id="sf-hora-picker" onclick="openTimePicker('sf-hora')" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:0 10px;cursor:pointer;font-size:14px;color:#2C2C2A;width:100%;box-sizing:border-box;height:36px">
           <span id="sf-hora-display">09:00</span>
           <span style="font-size:11px;color:#B4B2A9">▾</span>
         </div>
