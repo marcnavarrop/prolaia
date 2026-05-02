@@ -1459,15 +1459,6 @@ async function manualSync(){
   }
 }
 
-nction forceExerciseMigration(){
-  // Always overwrite these 3 groups with the latest Excel data
-  let changed=false;
-  Object.entries(EXCEL_EXERCISE_GROUPS).forEach(([grup,exs])=>{
-    exerciseDB[grup]=exs;
-    changed=true;
-  });
-  if(changed) lsSave();
-}
 function lsSave(){
   try{
     localStorage.setItem(LS.CLIENTS,JSON.stringify(clients));
