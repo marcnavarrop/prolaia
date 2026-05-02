@@ -582,6 +582,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <!-- Search bar -->
       <div class="flex-row" style="margin-bottom:10px">
         <input class="search" id="ex-search" placeholder="Cercar exercici..." oninput="filterExercises(this.value)">
+        <div id="ex-subgroup-chips" class="chips" style="display:none;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
         <button class="btn-sec btn-sm" onclick="openGroupDrawer()" title="Gestionar grups">⊞ Grups</button>
         <button class="btn-main btn-sm" onclick="openExerciseDrawer()">+ nou</button>
       </div>
@@ -867,7 +868,10 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     <div class="drawer-title" id="ex-drawer-title">Nou exercici</div>
     <div class="field-row">
       <div class="field"><label>Nom *</label><input id="ef-nom" placeholder="Ex: Bulgarian split squat"></div>
-      <div class="field"><label>Grup *</label><select id="ef-grup"></select></div>
+      <div class="field-row">
+        <div class="field"><label>Grup *</label><select id="ef-grup" onchange="updateSubgrupSelect()"></select></div>
+        <div class="field"><label>Subgrup</label><select id="ef-subgrup"><option value="">— Cap —</option></select></div>
+      </div>
     </div>
     <div class="field-row">
       <div class="field"><label>Dificultat</label>
@@ -1455,13 +1459,7 @@ async function manualSync(){
   }
 }
 
-// Excel exercise groups (auto-updated)
-const EXCEL_EXERCISE_GROUPS={
-  'Tronc Superior':[{nom:'Chin-ups / Pull-ups',subgrup:'Esquena'},{nom:'Rem a la cintura',subgrup:'Esquena'},{nom:'Rem a la cintura amb manuella a una ma',subgrup:'Esquena'},{nom:'Extensió d\'espatlles a la politja alta dempeus',subgrup:'Esquena'},{nom:'Rem TRX',subgrup:'Esquena'},{nom:'Elevació lateral amb manuelles',subgrup:'Hombro'},{nom:'Elevació frontal amb manuelles',subgrup:'Hombro'},{nom:'Pájaro / abducción de hombros con flexión de tronco con mancuernas',subgrup:'Hombro'},{nom:'Press militar amb barra o manuella',subgrup:'Hombro'},{nom:'Pres militar unilateral',subgrup:'General'},{nom:'Press tras nuca amb barra',subgrup:'Hombro'},{nom:'Rem vertical barra',subgrup:'Hombro'},{nom:'Rem a les clavícules amb barra',subgrup:'Hombro'},{nom:'Rotació externa d\'espatlla',subgrup:'Hombro'},{nom:'Landmine uni lateral',subgrup:'Hombro'},{nom:'Landmine bilateral',subgrup:'Hombro'},{nom:'Face pull',subgrup:'Hombro'},{nom:'Snatch',subgrup:'Hombro'},{nom:'Clean',subgrup:'Hombro'},{nom:'Curl barra',subgrup:'Braç'},{nom:'Curl concentrado con mancuerna',subgrup:'Braç'},{nom:'Extensió colze per sobre el cap',subgrup:'Triceps'},{nom:'Extensió colze estirat al banc',subgrup:'Triceps'},{nom:'Press banca',subgrup:'Pit'},{nom:'Flexions',subgrup:'Pit'},{nom:'Flexions + pujar a step',subgrup:'General'},{nom:'Flexions + shoulder pres',subgrup:'General'},{nom:'Obertures braços amb manuelles',subgrup:'Pit'},{nom:'Obertures braços amb TRX',subgrup:'General'},{nom:'Fons a les paraleles',subgrup:'Pit'},{nom:'Pullover',subgrup:'Pit'},{nom:'Pullover amb goma',subgrup:'General'}],
-  'Core':[{nom:'Planxa frontal',subgrup:'Abdominal'},{nom:'Planxa lateral',subgrup:'Abdominal'},{nom:'Mountainclimbers',subgrup:'Abdominal'},{nom:'Spider',subgrup:'Abdominal'},{nom:'Shoulder taps planc',subgrup:'Abdominal'},{nom:'Planxa dinamica',subgrup:'Abdominal'},{nom:'Planxa +abducció cames',subgrup:'Abdominal'},{nom:'Planxa movent peus',subgrup:'Abdominal'},{nom:'Planxa mans fitball',subgrup:'Abdominal'},{nom:'Planxa peus pitball',subgrup:'Abdominal'},{nom:'Planxa agrupacions TRX',subgrup:'Abdominal'},{nom:'Mountainclimbers TRX',subgrup:'Abdominal'},{nom:'Planxa + obertures TRX',subgrup:'Abdominal'},{nom:'Caminar en Planxa',subgrup:'Abdominal'},{nom:'Planxa lateral + crunx',subgrup:'Abdominal'},{nom:'Planxa lat movent maluc',subgrup:'Abdominal'},{nom:'Planxa lat calaix movent malucs',subgrup:'Abdominal'},{nom:'Planxa lat movent cames',subgrup:'Abdominal'},{nom:'Planxa lat dinamica',subgrup:'Abdominal'},{nom:'Planxa lat + rotació',subgrup:'Abdominal'},{nom:'Planxa lat + goma',subgrup:'Abdominal'},{nom:'Agrupacions barra',subgrup:'Abdominal'},{nom:'Pres pallof al pit',subgrup:'Abdominal'},{nom:'Pres pallof rotant',subgrup:'Abdominal'},{nom:'Pres pallof vertical',subgrup:'Abdominal'},{nom:'Rotacions barra',subgrup:'Abdominal'},{nom:'Inclinacions kb',subgrup:'Abdominal'},{nom:'Rotacions kb',subgrup:'Abdominal'},{nom:'V',subgrup:'Abdominal'},{nom:'Acordeon',subgrup:'Abdominal'},{nom:'Russian Twist',subgrup:'Abdominal'},{nom:'V passant fitball',subgrup:'Abdominal'},{nom:'Hip trusht',subgrup:'Gluti'},{nom:'Pont de gluti',subgrup:'Gluti'},{nom:'Pont d\'isquio calaix',subgrup:'Gluti'},{nom:'Pont d\'isquio fitball',subgrup:'Gluti'},{nom:'Pont de gluti i isquio amb talons',subgrup:'Gluti'},{nom:'Monster walk',subgrup:'Gluti'},{nom:'Patada lateral miniband',subgrup:'Gluti'},{nom:'Patada enrrere miniband',subgrup:'Gluti'},{nom:'Elevació tronc (decubiprono)',subgrup:'Lumbar'},{nom:'Foca',subgrup:'Lumbar'},{nom:'Foca + retracció',subgrup:'Lumbar'},{nom:'Elevacio peus alterns (decubitprono)',subgrup:'Lumbar'},{nom:'Saludo al sol',subgrup:'Lumbar'}],
-  'Tronc Inferior':[{nom:'Pes mort',subgrup:'Isquio'},{nom:'Snach grip DL',subgrup:'Isquio'},{nom:'Sumo DL',subgrup:'Isquio + aductor'},{nom:'Romanian DL',subgrup:'Isquio'},{nom:'Stiff legged DL',subgrup:'Isquio'},{nom:'Good morning',subgrup:'Isquio'},{nom:'Single leg DL',subgrup:'Isquio'},{nom:'Squat',subgrup:'Quadriceps'},{nom:'Back squat',subgrup:'Quadriceps'},{nom:'Front squat',subgrup:'Quadriceps'},{nom:'Globet squat',subgrup:'Quadriceps'},{nom:'Overhead squat',subgrup:'Quadriceps'},{nom:'Lunge',subgrup:'Quadriceps + gluti'},{nom:'Bulgarian squat',subgrup:'Quadriceps + gluti'},{nom:'Single leg squat',subgrup:'Quadriceps'},{nom:'Squat uni calaix',subgrup:'Quadriceps'},{nom:'Extensió cama conica',subgrup:'Quadriceps'},{nom:'Extensió cama',subgrup:'Quadriceps'},{nom:'Apretar genoll contra coixí',subgrup:'Quadriceps'},{nom:'Puntetes amb pes',subgrup:'Besons'}],
-};
-function forceExerciseMigration(){
+nction forceExerciseMigration(){
   // Always overwrite these 3 groups with the latest Excel data
   let changed=false;
   Object.entries(EXCEL_EXERCISE_GROUPS).forEach(([grup,exs])=>{
@@ -3021,18 +3019,34 @@ function confirmDeleteClient(id){
 // ══════════════════════════════════════
 // EXERCICIS
 // ══════════════════════════════════════
-const GROUP_COLORS={
-  'Activació':'gd-activacio','Tronc superior':'gd-troncsup','Tronc inferior':'gd-troncinf',
-  'Cardio':'gd-cardio','Mobilitat':'gd-mobilitat','Prevenció lesions':'gd-prevencio','Core':'gd-core'
+// Colors per grup — es calculen dinàmicament per no repetir
+const PALETTE_DOTS=['gd-troncsup','gd-troncinf','gd-cardio','gd-mobilitat','gd-prevencio','gd-core','gd-activacio'];
+const PALETTE_TEXT=['#185FA5','#854F0B','#993C1D','#3C3489','#A32D2D','#444441','#0F6E56'];
+const PALETTE_BG=['#E6F1FB','#FAEEDA','#FAECE7','#EEEDFE','#FCEBEB','#F1EFE8','#E1F5EE'];
+// Predefined colors for known groups
+const GROUP_COLORS_FIXED={
+  'Tronc Superior':'gd-troncsup','Tronc Inferior':'gd-troncinf','Core':'gd-core',
+  'Cardio':'gd-cardio','Mobilitat':'gd-mobilitat','Funcional':'gd-activacio'
 };
-const GROUP_TEXT_COLORS={
-  'Activació':'#0F6E56','Tronc superior':'#185FA5','Tronc inferior':'#854F0B',
-  'Cardio':'#993C1D','Mobilitat':'#3C3489','Prevenció lesions':'#A32D2D','Core':'#444441'
+const GROUP_TEXT_COLORS_FIXED={
+  'Tronc Superior':'#185FA5','Tronc Inferior':'#854F0B','Core':'#444441',
+  'Cardio':'#993C1D','Mobilitat':'#3C3489','Funcional':'#0F6E56'
 };
-const GROUP_BG_COLORS={
-  'Activació':'#E1F5EE','Tronc superior':'#E6F1FB','Tronc inferior':'#FAEEDA',
-  'Cardio':'#FAECE7','Mobilitat':'#EEEDFE','Prevenció lesions':'#FCEBEB','Core':'#F1EFE8'
+const GROUP_BG_COLORS_FIXED={
+  'Tronc Superior':'#E6F1FB','Tronc Inferior':'#FAEEDA','Core':'#F1EFE8',
+  'Cardio':'#FAECE7','Mobilitat':'#EEEDFE','Funcional':'#E1F5EE'
 };
+function getGroupColor(g,type){
+  const keys=Object.keys(exerciseDB);
+  const idx=keys.indexOf(g);
+  if(type==='dot') return GROUP_COLORS_FIXED[g]||PALETTE_DOTS[idx%PALETTE_DOTS.length];
+  if(type==='text') return GROUP_TEXT_COLORS_FIXED[g]||PALETTE_TEXT[idx%PALETTE_TEXT.length];
+  return GROUP_BG_COLORS_FIXED[g]||PALETTE_BG[idx%PALETTE_BG.length];
+}
+// Backward compat
+const GROUP_COLORS=new Proxy({},{get:(t,g)=>getGroupColor(g,'dot')});
+const GROUP_TEXT_COLORS=new Proxy({},{get:(t,g)=>getGroupColor(g,'text')});
+const GROUP_BG_COLORS=new Proxy({},{get:(t,g)=>getGroupColor(g,'bg')});
 
 // exerciseDB structure: { grupNom: [ {nom, desc, musculs, diff, video, img}, ... ] }
 // Migration: convert old string arrays to object arrays
@@ -3074,17 +3088,81 @@ function renderGroupManageList(){
   if(!groups.length){el.innerHTML='<div style="font-size:12px;color:#888780;text-align:center;padding:12px">Afegeix el primer grup</div>';return;}
   el.innerHTML='';
   groups.forEach(g=>{
-    const count=(exerciseDB[g]||[]).length;
-    const col=GROUP_TEXT_COLORS[g]||'#444441';
+    const exs=exerciseDB[g]||[];
+    const count=exs.length;
+    const col=getGroupColor(g,'text');
+    const subgroups=[...new Set(exs.map(e=>e.subgrup).filter(Boolean))];
+
+    const wrap=document.createElement('div');wrap.style.marginBottom='6px';
+
+    // Group row
     const row=document.createElement('div');row.className='group-manage-row';
     row.innerHTML='<span class="group-manage-dot" style="background:'+col+'"></span>'
       +'<span class="group-manage-name">'+g+'</span>'
       +'<span class="group-manage-count">'+count+' ex.</span>'
+      +(subgroups.length?'<button class="icon-btn" title="Subgrups" style="font-size:11px">▾</button>':'<span style="width:28px"></span>')
       +'<button class="icon-btn" title="Reanomenar">✎</button>'
       +'<button class="icon-btn" style="color:#E24B4A" title="Eliminar grup">✕</button>';
-    row.querySelectorAll('.icon-btn')[0].onclick=()=>renameGroupPrompt(g);
-    row.querySelectorAll('.icon-btn')[1].onclick=()=>deleteGroup(g);
-    el.appendChild(row);
+
+    const btns=row.querySelectorAll('.icon-btn');
+    let btnIdx=0;
+    if(subgroups.length){
+      btns[btnIdx].onclick=(grp=>()=>{
+        const sg=wrap.querySelector('.subgroup-list');
+        if(sg){const open=sg.style.display!=='none';sg.style.display=open?'none':'block';btns[0].textContent=open?'▾':'▴';}
+      })(g);
+      btnIdx++;
+    }
+    btns[btnIdx].onclick=()=>renameGroupPrompt(g); btnIdx++;
+    btns[btnIdx].onclick=()=>deleteGroup(g);
+    wrap.appendChild(row);
+
+    // Subgroups expandable
+    if(subgroups.length){
+      const sgList=document.createElement('div');
+      sgList.className='subgroup-list';
+      sgList.style.cssText='display:none;margin:4px 0 0 20px;background:#F8F6F2;border-radius:8px;padding:6px 8px';
+      subgroups.forEach(sg=>{
+        const sgCount=exs.filter(e=>e.subgrup===sg).length;
+        const sgRow=document.createElement('div');
+        sgRow.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#5F5E5A;border-bottom:0.5px solid #EDECEA';
+        sgRow.innerHTML='<span style="flex:1">'+sg+'</span><span style="font-size:10px;color:#888780">'+sgCount+' ex.</span>'
+          +'<button class="icon-btn" title="Reanomenar subgrup" style="font-size:12px">✎</button>'
+          +'<button class="icon-btn" style="color:#E24B4A;font-size:12px" title="Eliminar subgrup">✕</button>';
+        sgRow.querySelectorAll('.icon-btn')[0].onclick=()=>renameSubgrup(g,sg);
+        sgRow.querySelectorAll('.icon-btn')[1].onclick=()=>deleteSubgrup(g,sg);
+        sgList.appendChild(sgRow);
+      });
+      // Add new subgrup button
+      const addSg=document.createElement('button');
+      addSg.style.cssText='margin-top:5px;font-size:11px;color:#185FA5;background:none;border:none;cursor:pointer;padding:0;font-family:inherit';
+      addSg.textContent='+ Nou subgrup';
+      addSg.onclick=()=>{
+        const nom=window.prompt('Nom del nou subgrup a "'+g+'":');
+        if(nom&&nom.trim()){
+          // Add subgrup tag to first exercise or just register it
+          toast('Subgrup "'+nom.trim()+'" disponible — assigna\'l en crear exercicis');
+          renderGroupManageList();
+        }
+      };
+      sgList.appendChild(addSg);
+      wrap.appendChild(sgList);
+    }
+    el.appendChild(wrap);
+  });
+}
+function renameSubgrup(g,sg){
+  const nou=window.prompt('Nou nom per al subgrup "'+sg+'":',sg);
+  if(!nou||nou===sg) return;
+  (exerciseDB[g]||[]).forEach(e=>{if(e.subgrup===sg) e.subgrup=nou.trim();});
+  lsSave();renderGroupManageList();renderExercises();
+  toast('Subgrup reanomenat');
+}
+function deleteSubgrup(g,sg){
+  openConfirm('Eliminar subgrup','Els exercicis de "'+sg+'" quedaran sense subgrup assignat.','Eliminar',()=>{
+    (exerciseDB[g]||[]).forEach(e=>{if(e.subgrup===sg) delete e.subgrup;});
+    lsSave();renderGroupManageList();renderExercises();
+    toast('Subgrup eliminat');
   });
 }
 function addGroup(){
@@ -3120,6 +3198,7 @@ function renameGroupPrompt(g){
 
 // ── Exercise CRUD ──
 let activeExGroup=null;
+let activeExSubgroup=null;
 let pendingImgBase64='';
 
 function openExerciseDrawer(grupPresel, editObj){
@@ -3141,12 +3220,15 @@ function openExerciseDrawer(grupPresel, editObj){
     const sel=document.getElementById('ef-grup');
     for(let i=0;i<sel.options.length;i++) if(sel.options[i].value===grupPresel){sel.selectedIndex=i;break;}
   }
+  updateSubgrupSelect();
   if(editObj){
     document.getElementById('ef-nom').value=editObj.nom||'';
     document.getElementById('ef-desc').value=editObj.desc||'';
     document.getElementById('ef-musculs').value=editObj.musculs||'';
     document.getElementById('ef-video').value=editObj.video||'';
     document.getElementById('ef-diff').value=editObj.diff||'Bàsic';
+    updateSubgrupSelect();
+    if(editObj.subgrup){const ss=document.getElementById('ef-subgrup');if(ss)ss.value=editObj.subgrup;}
     if(editObj.img){
       preview.style.cssText='background-image:url('+editObj.img+');background-size:cover;background-position:center;height:80px;border-radius:8px;border:0.5px solid #D3D1C7';
       preview.innerHTML='';
@@ -3160,6 +3242,31 @@ function openExerciseDrawer(grupPresel, editObj){
     delete document.getElementById('exercise-drawer').dataset.editGrup;
   }
   openDrawer('exercise-drawer');
+}
+
+function updateSubgrupSelect(){
+  const grup=document.getElementById('ef-grup')?.value;
+  const sel=document.getElementById('ef-subgrup');
+  if(!sel||!grup) return;
+  const exs=exerciseDB[grup]||[];
+  const subgrups=[...new Set(exs.map(e=>e.subgrup).filter(Boolean))];
+  sel.innerHTML='<option value="">— Cap —</option>';
+  subgrups.forEach(sg=>{
+    const o=document.createElement('option');o.value=sg;o.textContent=sg;
+    sel.appendChild(o);
+  });
+  // Option to add new subgrup
+  const newOpt=document.createElement('option');newOpt.value='__nou__';newOpt.textContent='+ Nou subgrup...';
+  sel.appendChild(newOpt);
+  sel.onchange=()=>{
+    if(sel.value==='__nou__'){
+      const nom=window.prompt('Nom del nou subgrup:');
+      if(nom&&nom.trim()){
+        const o=document.createElement('option');o.value=nom.trim();o.textContent=nom.trim();
+        sel.insertBefore(o,newOpt);sel.value=nom.trim();
+      } else {sel.value='';}
+    }
+  };
 }
 
 function previewExImage(input){
@@ -3188,8 +3295,10 @@ function saveExercise(){
   if(!nom){toast('Cal posar el nom');return;}
   const grup=document.getElementById('ef-grup').value;
   if(!grup){toast('Cal seleccionar un grup');return;}
+  const subgrupVal=document.getElementById('ef-subgrup')?.value||'';
   const obj={
     nom,
+    subgrup:subgrupVal&&subgrupVal!=='__nou__'?subgrupVal:undefined,
     desc:document.getElementById('ef-desc').value.trim(),
     musculs:document.getElementById('ef-musculs').value.trim(),
     diff:document.getElementById('ef-diff').value,
@@ -3278,11 +3387,37 @@ function renderExercises(){
     const b=document.createElement('button');b.className='btn-main btn-sm';b.textContent='+ Afegir primer exercici';
     b.onclick=()=>openExerciseDrawer(activeExGroup);empty.appendChild(b);listEl.appendChild(empty);return;
   }
+  // Subgroup filter chips
+  const subgroups=[...new Set(filtered.map(e=>e.subgrup).filter(Boolean))];
+  const chipsContainer=document.getElementById('ex-subgroup-chips');
+  if(chipsContainer){
+    if(subgroups.length>1){
+      chipsContainer.style.display='flex';
+      chipsContainer.innerHTML='';
+      const allChip=document.createElement('button');
+      allChip.className='chip'+((!activeExSubgroup||!subgroups.includes(activeExSubgroup))?' on':'');
+      allChip.textContent='Tots';
+      allChip.onclick=()=>{activeExSubgroup=null;renderExercises();};
+      chipsContainer.appendChild(allChip);
+      subgroups.forEach(sg=>{
+        const btn=document.createElement('button');
+        btn.className='chip'+(activeExSubgroup===sg?' on':'');
+        btn.textContent=sg;
+        btn.onclick=()=>{activeExSubgroup=sg;renderExercises();};
+        chipsContainer.appendChild(btn);
+      });
+    } else {
+      chipsContainer.style.display='none';
+      activeExSubgroup=null;
+    }
+  }
+  // Filter by subgroup if selected
+  const finalList=activeExSubgroup?filtered.filter(e=>e.subgrup===activeExSubgroup):filtered;
   // Group by subgrup if present
-  const hasSubgroups=filtered.some(e=>e.subgrup);
+  const hasSubgroups=finalList.some(e=>e.subgrup)&&!activeExSubgroup;
   if(hasSubgroups){
     const bySubgrup={};
-    filtered.forEach(ex=>{
+    finalList.forEach(ex=>{
       const sg=ex.subgrup||'General';
       if(!bySubgrup[sg]) bySubgrup[sg]=[];
       bySubgrup[sg].push(ex);
@@ -3295,7 +3430,7 @@ function renderExercises(){
       exList.forEach(ex=>listEl.appendChild(buildExCard(ex,activeExGroup)));
     });
   } else {
-    filtered.forEach(ex=>listEl.appendChild(buildExCard(ex,activeExGroup)));
+    finalList.forEach(ex=>listEl.appendChild(buildExCard(ex,activeExGroup)));
   }
 }
 function buildExCard(ex,grp){
@@ -3309,7 +3444,7 @@ function buildExCard(ex,grp){
   card.onclick=()=>openExerciseDetail(grp,nom);
   return card;
 }
-function setExGroup(g){activeExGroup=g;renderExercises();}
+function setExGroup(g){activeExGroup=g;activeExSubgroup=null;renderExercises();}
 function filterExercises(q){
   if(!q){renderExercises();return;}
   migrateExercises();
@@ -4568,7 +4703,6 @@ updateInvoiceClientSelect();
 renderInvoices();
 initAgendaSwipe();
 checkAutoBackup();
-forceExerciseMigration();
 if(window.innerWidth<768){const sh=document.getElementById('swipe-hint');if(sh)sh.style.display='block';}
 
 // Load from Supabase (overwrites localStorage if data found)
@@ -4580,8 +4714,7 @@ if(window.location.protocol!=='file:'){
   const ok=await sbLoad();
   if(ind) ind.style.display='none';
   if(ok){
-    forceExerciseMigration();
-    lsSave();
+        lsSave();
     refreshAll();
   }
 })();
