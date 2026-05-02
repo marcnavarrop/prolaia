@@ -1455,6 +1455,21 @@ async function manualSync(){
   }
 }
 
+// Excel exercise groups (auto-updated)
+const EXCEL_EXERCISE_GROUPS={
+  'Tronc Superior':[{nom:'Chin-ups / Pull-ups',subgrup:'Esquena'},{nom:'Rem a la cintura',subgrup:'Esquena'},{nom:'Rem a la cintura amb manuella a una ma',subgrup:'Esquena'},{nom:'Extensió d\'espatlles a la politja alta dempeus',subgrup:'Esquena'},{nom:'Rem TRX',subgrup:'Esquena'},{nom:'Elevació lateral amb manuelles',subgrup:'Hombro'},{nom:'Elevació frontal amb manuelles',subgrup:'Hombro'},{nom:'Pájaro / abducción de hombros con flexión de tronco con mancuernas',subgrup:'Hombro'},{nom:'Press militar amb barra o manuella',subgrup:'Hombro'},{nom:'Pres militar unilateral',subgrup:'General'},{nom:'Press tras nuca amb barra',subgrup:'Hombro'},{nom:'Rem vertical barra',subgrup:'Hombro'},{nom:'Rem a les clavícules amb barra',subgrup:'Hombro'},{nom:'Rotació externa d\'espatlla',subgrup:'Hombro'},{nom:'Landmine uni lateral',subgrup:'Hombro'},{nom:'Landmine bilateral',subgrup:'Hombro'},{nom:'Face pull',subgrup:'Hombro'},{nom:'Snatch',subgrup:'Hombro'},{nom:'Clean',subgrup:'Hombro'},{nom:'Curl barra',subgrup:'Braç'},{nom:'Curl concentrado con mancuerna',subgrup:'Braç'},{nom:'Extensió colze per sobre el cap',subgrup:'Triceps'},{nom:'Extensió colze estirat al banc',subgrup:'Triceps'},{nom:'Press banca',subgrup:'Pit'},{nom:'Flexions',subgrup:'Pit'},{nom:'Flexions + pujar a step',subgrup:'General'},{nom:'Flexions + shoulder pres',subgrup:'General'},{nom:'Obertures braços amb manuelles',subgrup:'Pit'},{nom:'Obertures braços amb TRX',subgrup:'General'},{nom:'Fons a les paraleles',subgrup:'Pit'},{nom:'Pullover',subgrup:'Pit'},{nom:'Pullover amb goma',subgrup:'General'}],
+  'Core':[{nom:'Planxa frontal',subgrup:'Abdominal'},{nom:'Planxa lateral',subgrup:'Abdominal'},{nom:'Mountainclimbers',subgrup:'Abdominal'},{nom:'Spider',subgrup:'Abdominal'},{nom:'Shoulder taps planc',subgrup:'Abdominal'},{nom:'Planxa dinamica',subgrup:'Abdominal'},{nom:'Planxa +abducció cames',subgrup:'Abdominal'},{nom:'Planxa movent peus',subgrup:'Abdominal'},{nom:'Planxa mans fitball',subgrup:'Abdominal'},{nom:'Planxa peus pitball',subgrup:'Abdominal'},{nom:'Planxa agrupacions TRX',subgrup:'Abdominal'},{nom:'Mountainclimbers TRX',subgrup:'Abdominal'},{nom:'Planxa + obertures TRX',subgrup:'Abdominal'},{nom:'Caminar en Planxa',subgrup:'Abdominal'},{nom:'Planxa lateral + crunx',subgrup:'Abdominal'},{nom:'Planxa lat movent maluc',subgrup:'Abdominal'},{nom:'Planxa lat calaix movent malucs',subgrup:'Abdominal'},{nom:'Planxa lat movent cames',subgrup:'Abdominal'},{nom:'Planxa lat dinamica',subgrup:'Abdominal'},{nom:'Planxa lat + rotació',subgrup:'Abdominal'},{nom:'Planxa lat + goma',subgrup:'Abdominal'},{nom:'Agrupacions barra',subgrup:'Abdominal'},{nom:'Pres pallof al pit',subgrup:'Abdominal'},{nom:'Pres pallof rotant',subgrup:'Abdominal'},{nom:'Pres pallof vertical',subgrup:'Abdominal'},{nom:'Rotacions barra',subgrup:'Abdominal'},{nom:'Inclinacions kb',subgrup:'Abdominal'},{nom:'Rotacions kb',subgrup:'Abdominal'},{nom:'V',subgrup:'Abdominal'},{nom:'Acordeon',subgrup:'Abdominal'},{nom:'Russian Twist',subgrup:'Abdominal'},{nom:'V passant fitball',subgrup:'Abdominal'},{nom:'Hip trusht',subgrup:'Gluti'},{nom:'Pont de gluti',subgrup:'Gluti'},{nom:'Pont d\'isquio calaix',subgrup:'Gluti'},{nom:'Pont d\'isquio fitball',subgrup:'Gluti'},{nom:'Pont de gluti i isquio amb talons',subgrup:'Gluti'},{nom:'Monster walk',subgrup:'Gluti'},{nom:'Patada lateral miniband',subgrup:'Gluti'},{nom:'Patada enrrere miniband',subgrup:'Gluti'},{nom:'Elevació tronc (decubiprono)',subgrup:'Lumbar'},{nom:'Foca',subgrup:'Lumbar'},{nom:'Foca + retracció',subgrup:'Lumbar'},{nom:'Elevacio peus alterns (decubitprono)',subgrup:'Lumbar'},{nom:'Saludo al sol',subgrup:'Lumbar'}],
+  'Tronc Inferior':[{nom:'Pes mort',subgrup:'Isquio'},{nom:'Snach grip DL',subgrup:'Isquio'},{nom:'Sumo DL',subgrup:'Isquio + aductor'},{nom:'Romanian DL',subgrup:'Isquio'},{nom:'Stiff legged DL',subgrup:'Isquio'},{nom:'Good morning',subgrup:'Isquio'},{nom:'Single leg DL',subgrup:'Isquio'},{nom:'Squat',subgrup:'Quadriceps'},{nom:'Back squat',subgrup:'Quadriceps'},{nom:'Front squat',subgrup:'Quadriceps'},{nom:'Globet squat',subgrup:'Quadriceps'},{nom:'Overhead squat',subgrup:'Quadriceps'},{nom:'Lunge',subgrup:'Quadriceps + gluti'},{nom:'Bulgarian squat',subgrup:'Quadriceps + gluti'},{nom:'Single leg squat',subgrup:'Quadriceps'},{nom:'Squat uni calaix',subgrup:'Quadriceps'},{nom:'Extensió cama conica',subgrup:'Quadriceps'},{nom:'Extensió cama',subgrup:'Quadriceps'},{nom:'Apretar genoll contra coixí',subgrup:'Quadriceps'},{nom:'Puntetes amb pes',subgrup:'Besons'}],
+};
+function forceExerciseMigration(){
+  // Always overwrite these 3 groups with the latest Excel data
+  let changed=false;
+  Object.entries(EXCEL_EXERCISE_GROUPS).forEach(([grup,exs])=>{
+    exerciseDB[grup]=exs;
+    changed=true;
+  });
+  if(changed) lsSave();
+}
 function lsSave(){
   try{
     localStorage.setItem(LS.CLIENTS,JSON.stringify(clients));
@@ -1733,17 +1748,114 @@ function getAutoBackupInfo(){
 // ══════════════════════════════════════
 // DATA
 // ══════════════════════════════════════
-function defaultExerciseDB(){
-  return {
-    'Activació':['Glut bridge','Bird dog','Dead bug','Clamshell','Rotació externa maluc','Activació escapular','Planxa isomètrica','Hollow body hold'],
-    'Tronc superior':['Press banca','Press militar','Rem amb barra','Rem amb mancuernes','Dominades','Fons a paral·leles','Curl de bíceps','Tríceps en politja','Crucifix mancuernes','Pull-over'],
-    'Tronc inferior':['Esquat amb barra','Pes mort','Hip thrust','Estocades','Leg press','Extensió de cuàdriceps','Curl de femoral','Abductor màquina','Addductor màquina','Step-up'],
-    'Cardio':['HIIT a la cinta','Salt a la corda','Escalador','Burpees','Bicicleta estàtica','Rem ergòmetre','Box jumps','Sprints','Jumping jacks','Skipping'],
-    'Mobilitat':['Obertura toràcica','Pigeon pose','Cat-cow','World greatest stretch','Hip flexor stretch','Estirament isquiotibials','Rotació lumbar','Adductor stretch','Pectoral doorway','Neck rolls'],
-    'Prevenció lesions':['Exercicis de maneguet rotador','Excèntrics d\'isquiotibials','Enfortiment glut medi','Tibial anterior','Eccentric heel drop','Equilibri monopodal','Propiocepció BOSU','Vas laterals','Monster walk','Copenhagen plank'],
-    'Core':['Planxa isomètrica','Crunch bicicleta','Pallof press','Russian twist','Hollow hold','L-sit','Dragon flag','Rollout ab wheel','Side plank','Stir the pot'],
-  };
-}
+function defaultExerciseDB(){return {
+    'Tronc Superior': [
+      {nom:'Chin-ups / Pull-ups',subgrup:'Esquena'},
+      {nom:'Rem a la cintura',subgrup:'Esquena'},
+      {nom:'Rem a la cintura amb manuella a una ma',subgrup:'Esquena'},
+      {nom:'Extensió d\'espatlles a la politja alta dempeus',subgrup:'Esquena'},
+      {nom:'Rem TRX',subgrup:'Esquena'},
+      {nom:'Elevació lateral amb manuelles',subgrup:'Hombro'},
+      {nom:'Elevació frontal amb manuelles',subgrup:'Hombro'},
+      {nom:'Pájaro / abducción de hombros con flexión de tronco con mancuernas',subgrup:'Hombro'},
+      {nom:'Press militar amb barra o manuella',subgrup:'Hombro'},
+      {nom:'Pres militar unilateral',subgrup:'General'},
+      {nom:'Press tras nuca amb barra',subgrup:'Hombro'},
+      {nom:'Rem vertical barra',subgrup:'Hombro'},
+      {nom:'Rem a les clavícules amb barra',subgrup:'Hombro'},
+      {nom:'Rotació externa d\'espatlla',subgrup:'Hombro'},
+      {nom:'Landmine uni lateral',subgrup:'Hombro'},
+      {nom:'Landmine bilateral',subgrup:'Hombro'},
+      {nom:'Face pull',subgrup:'Hombro'},
+      {nom:'Snatch',subgrup:'Hombro'},
+      {nom:'Clean',subgrup:'Hombro'},
+      {nom:'Curl barra',subgrup:'Braç'},
+      {nom:'Curl concentrado con mancuerna',subgrup:'Braç'},
+      {nom:'Extensió colze per sobre el cap',subgrup:'Triceps'},
+      {nom:'Extensió colze estirat al banc',subgrup:'Triceps'},
+      {nom:'Press banca',subgrup:'Pit'},
+      {nom:'Flexions',subgrup:'Pit'},
+      {nom:'Flexions + pujar a step',subgrup:'General'},
+      {nom:'Flexions + shoulder pres',subgrup:'General'},
+      {nom:'Obertures braços amb manuelles',subgrup:'Pit'},
+      {nom:'Obertures braços amb TRX',subgrup:'General'},
+      {nom:'Fons a les paraleles',subgrup:'Pit'},
+      {nom:'Pullover',subgrup:'Pit'},
+      {nom:'Pullover amb goma',subgrup:'General'},
+    ],
+    'Core': [
+      {nom:'Planxa frontal',subgrup:'Abdominal'},
+      {nom:'Planxa lateral',subgrup:'Abdominal'},
+      {nom:'Mountainclimbers',subgrup:'Abdominal'},
+      {nom:'Spider',subgrup:'Abdominal'},
+      {nom:'Shoulder taps planc',subgrup:'Abdominal'},
+      {nom:'Planxa dinamica',subgrup:'Abdominal'},
+      {nom:'Planxa +abducció cames',subgrup:'Abdominal'},
+      {nom:'Planxa movent peus',subgrup:'Abdominal'},
+      {nom:'Planxa mans fitball',subgrup:'Abdominal'},
+      {nom:'Planxa peus pitball',subgrup:'Abdominal'},
+      {nom:'Planxa agrupacions TRX',subgrup:'Abdominal'},
+      {nom:'Mountainclimbers TRX',subgrup:'Abdominal'},
+      {nom:'Planxa + obertures TRX',subgrup:'Abdominal'},
+      {nom:'Caminar en Planxa',subgrup:'Abdominal'},
+      {nom:'Planxa lateral + crunx',subgrup:'Abdominal'},
+      {nom:'Planxa lat movent maluc',subgrup:'Abdominal'},
+      {nom:'Planxa lat calaix movent malucs',subgrup:'Abdominal'},
+      {nom:'Planxa lat movent cames',subgrup:'Abdominal'},
+      {nom:'Planxa lat dinamica',subgrup:'Abdominal'},
+      {nom:'Planxa lat + rotació',subgrup:'Abdominal'},
+      {nom:'Planxa lat + goma',subgrup:'Abdominal'},
+      {nom:'Agrupacions barra',subgrup:'Abdominal'},
+      {nom:'Pres pallof al pit',subgrup:'Abdominal'},
+      {nom:'Pres pallof rotant',subgrup:'Abdominal'},
+      {nom:'Pres pallof vertical',subgrup:'Abdominal'},
+      {nom:'Rotacions barra',subgrup:'Abdominal'},
+      {nom:'Inclinacions kb',subgrup:'Abdominal'},
+      {nom:'Rotacions kb',subgrup:'Abdominal'},
+      {nom:'V',subgrup:'Abdominal'},
+      {nom:'Acordeon',subgrup:'Abdominal'},
+      {nom:'Russian Twist',subgrup:'Abdominal'},
+      {nom:'V passant fitball',subgrup:'Abdominal'},
+      {nom:'Hip trusht',subgrup:'Gluti'},
+      {nom:'Pont de gluti',subgrup:'Gluti'},
+      {nom:'Pont d\'isquio calaix',subgrup:'Gluti'},
+      {nom:'Pont d\'isquio fitball',subgrup:'Gluti'},
+      {nom:'Pont de gluti i isquio amb talons',subgrup:'Gluti'},
+      {nom:'Monster walk',subgrup:'Gluti'},
+      {nom:'Patada lateral miniband',subgrup:'Gluti'},
+      {nom:'Patada enrrere miniband',subgrup:'Gluti'},
+      {nom:'Elevació tronc (decubiprono)',subgrup:'Lumbar'},
+      {nom:'Foca',subgrup:'Lumbar'},
+      {nom:'Foca + retracció',subgrup:'Lumbar'},
+      {nom:'Elevacio peus alterns (decubitprono)',subgrup:'Lumbar'},
+      {nom:'Saludo al sol',subgrup:'Lumbar'},
+    ],
+    'Tronc Inferior': [
+      {nom:'Pes mort',subgrup:'Isquio'},
+      {nom:'Snach grip DL',subgrup:'Isquio'},
+      {nom:'Sumo DL',subgrup:'Isquio + aductor'},
+      {nom:'Romanian DL',subgrup:'Isquio'},
+      {nom:'Stiff legged DL',subgrup:'Isquio'},
+      {nom:'Good morning',subgrup:'Isquio'},
+      {nom:'Single leg DL',subgrup:'Isquio'},
+      {nom:'Squat',subgrup:'Quadriceps'},
+      {nom:'Back squat',subgrup:'Quadriceps'},
+      {nom:'Front squat',subgrup:'Quadriceps'},
+      {nom:'Globet squat',subgrup:'Quadriceps'},
+      {nom:'Overhead squat',subgrup:'Quadriceps'},
+      {nom:'Lunge',subgrup:'Quadriceps + gluti'},
+      {nom:'Bulgarian squat',subgrup:'Quadriceps + gluti'},
+      {nom:'Single leg squat',subgrup:'Quadriceps'},
+      {nom:'Squat uni calaix',subgrup:'Quadriceps'},
+      {nom:'Extensió cama conica',subgrup:'Quadriceps'},
+      {nom:'Extensió cama',subgrup:'Quadriceps'},
+      {nom:'Apretar genoll contra coixí',subgrup:'Quadriceps'},
+      {nom:'Puntetes amb pes',subgrup:'Besons'},
+    ],
+    'Cardio': ['HIIT a la cinta','Salt a la corda','Escalador','Burpees','Bicicleta estàtica','Rem ergòmetre','Box jumps','Sprints','Jumping jacks','Skipping'],
+    'Mobilitat': ['Obertura toràcica','Pigeon pose','Cat-cow','World greatest stretch','Hip flexor stretch','Estirament isquiotibials','Rotació lumbar','Adductor stretch','Pectoral doorway','Neck rolls'],
+}}
+
 // Working variables — populated by lsLoad()
 let sessionPrices={
   vindi:{individual:20.25,pareja:26.65,grupo:28.00},
@@ -3154,7 +3266,7 @@ function renderExercises(){
   if(!activeExGroup) return;
   const exs=exerciseDB[activeExGroup]||[];
   const q=(document.getElementById('ex-search')||{}).value||'';
-  const filtered=q?exs.filter(e=>e.nom.toLowerCase().includes(q.toLowerCase())||((e.musculs||'').toLowerCase().includes(q.toLowerCase()))):exs;
+  const filtered=q?exs.filter(e=>(e.nom||e).toLowerCase().includes(q.toLowerCase())):exs;
   const hdr=document.createElement('div');
   hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:9px';
   hdr.innerHTML='<div style="font-size:11px;color:#888780">'+filtered.length+' exercici'+(filtered.length!==1?'s':'')+' al grup</div>';
@@ -3166,15 +3278,36 @@ function renderExercises(){
     const b=document.createElement('button');b.className='btn-main btn-sm';b.textContent='+ Afegir primer exercici';
     b.onclick=()=>openExerciseDrawer(activeExGroup);empty.appendChild(b);listEl.appendChild(empty);return;
   }
-  filtered.forEach(ex=>{
-    const card=document.createElement('div');card.className='ex-card';
-    card.innerHTML='<div class="ex-card-top">'+groupDot(activeExGroup)+'<span class="ex-card-name">'+ex.nom+'</span>'
-      +'<div class="ex-card-actions">'+(ex.video?'<span style="font-size:13px">▶</span>':'')
-      +(ex.img?'<span style="font-size:13px">🖼</span>':'')+'<span class="diff-badge '+diffClass(ex.diff)+'">'+ex.diff+'</span></div></div>'
-      +(ex.musculs?'<div class="ex-card-meta"><span>'+ex.musculs+'</span></div>':'');
-    const grp=activeExGroup;const nom=ex.nom;card.onclick=()=>openExerciseDetail(grp,nom);
-    listEl.appendChild(card);
-  });
+  // Group by subgrup if present
+  const hasSubgroups=filtered.some(e=>e.subgrup);
+  if(hasSubgroups){
+    const bySubgrup={};
+    filtered.forEach(ex=>{
+      const sg=ex.subgrup||'General';
+      if(!bySubgrup[sg]) bySubgrup[sg]=[];
+      bySubgrup[sg].push(ex);
+    });
+    Object.entries(bySubgrup).forEach(([sg,exList])=>{
+      const sgHdr=document.createElement('div');
+      sgHdr.style.cssText='font-size:10px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 6px;padding-left:2px';
+      sgHdr.textContent=sg+' ('+exList.length+')';
+      listEl.appendChild(sgHdr);
+      exList.forEach(ex=>listEl.appendChild(buildExCard(ex,activeExGroup)));
+    });
+  } else {
+    filtered.forEach(ex=>listEl.appendChild(buildExCard(ex,activeExGroup)));
+  }
+}
+function buildExCard(ex,grp){
+  const card=document.createElement('div');card.className='ex-card';
+  const nom=ex.nom||ex;
+  card.innerHTML='<div class="ex-card-top">'+groupDot(grp)+'<span class="ex-card-name">'+nom+'</span>'
+    +'<div class="ex-card-actions">'+(ex.video?'<span style="font-size:13px">▶</span>':'')
+    +(ex.img?'<span style="font-size:13px">🖼</span>':'')
+    +(ex.diff?'<span class="diff-badge '+diffClass(ex.diff)+'">'+ex.diff+'</span>':'')+'</div></div>'
+    +(ex.musculs?'<div class="ex-card-meta"><span>'+ex.musculs+'</span></div>':'');
+  card.onclick=()=>openExerciseDetail(grp,nom);
+  return card;
 }
 function setExGroup(g){activeExGroup=g;renderExercises();}
 function filterExercises(q){
@@ -4435,6 +4568,7 @@ updateInvoiceClientSelect();
 renderInvoices();
 initAgendaSwipe();
 checkAutoBackup();
+forceExerciseMigration();
 if(window.innerWidth<768){const sh=document.getElementById('swipe-hint');if(sh)sh.style.display='block';}
 
 // Load from Supabase (overwrites localStorage if data found)
@@ -4446,6 +4580,7 @@ if(window.location.protocol!=='file:'){
   const ok=await sbLoad();
   if(ind) ind.style.display='none';
   if(ok){
+    forceExerciseMigration();
     lsSave();
     refreshAll();
   }
