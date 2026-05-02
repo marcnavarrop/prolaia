@@ -582,7 +582,6 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <!-- Search bar -->
       <div class="flex-row" style="margin-bottom:10px">
         <input class="search" id="ex-search" placeholder="Cercar exercici..." oninput="filterExercises(this.value)">
-        <div id="ex-subgroup-chips" class="chips" style="display:none;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
         <button class="btn-sec btn-sm" onclick="openGroupDrawer()" title="Gestionar grups">⊞ Grups</button>
         <button class="btn-main btn-sm" onclick="openExerciseDrawer()">+ nou</button>
       </div>
@@ -596,7 +595,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
         <button class="icon-btn" onclick="document.getElementById('ex-import-bar').style.display='none'" title="Tancar">✕</button>
       </div>
       <!-- Group tabs -->
-      <div id="ex-group-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <div id="ex-group-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+      <!-- Subgroup chips — appear below group tabs when a group has subgroups -->
+      <div id="ex-subgroup-chips" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:10px;padding:8px 10px;background:#fff;border-radius:10px;border:0.5px solid #D3D1C7"></div>
       <!-- Exercise list -->
       <div id="exercise-list"></div>
     </div>
@@ -3378,21 +3379,23 @@ function renderExercises(){
     const b=document.createElement('button');b.className='btn-main btn-sm';b.textContent='+ Afegir primer exercici';
     b.onclick=()=>openExerciseDrawer(activeExGroup);empty.appendChild(b);listEl.appendChild(empty);return;
   }
-  // Subgroup filter chips
+  // Subgroup filter chips — shown below group tabs
   const subgroups=[...new Set(filtered.map(e=>e.subgrup).filter(Boolean))];
   const chipsContainer=document.getElementById('ex-subgroup-chips');
   if(chipsContainer){
     if(subgroups.length>1){
       chipsContainer.style.display='flex';
-      chipsContainer.innerHTML='';
+      chipsContainer.innerHTML='<span style="font-size:10px;color:#888780;font-weight:500;align-self:center;margin-right:4px;white-space:nowrap">Subgrup:</span>';
       const allChip=document.createElement('button');
-      allChip.className='chip'+((!activeExSubgroup||!subgroups.includes(activeExSubgroup))?' on':'');
+      allChip.className='chip'+(!activeExSubgroup||!subgroups.includes(activeExSubgroup)?' on':'');
+      allChip.style.cssText='font-size:11px;padding:3px 9px';
       allChip.textContent='Tots';
       allChip.onclick=()=>{activeExSubgroup=null;renderExercises();};
       chipsContainer.appendChild(allChip);
       subgroups.forEach(sg=>{
         const btn=document.createElement('button');
         btn.className='chip'+(activeExSubgroup===sg?' on':'');
+        btn.style.cssText='font-size:11px;padding:3px 9px';
         btn.textContent=sg;
         btn.onclick=()=>{activeExSubgroup=sg;renderExercises();};
         chipsContainer.appendChild(btn);
