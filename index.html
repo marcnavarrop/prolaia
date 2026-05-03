@@ -565,6 +565,12 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
           <button class="chip ctx-filter-btn" onclick="setCtxFilter('vindi',this)"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFWklEQVR42rWXX4xcdRXHP+fcO7NTNBVKd0vJKgqJJoVgNDHG+KovauIDbn3QCBGz0q4NIhhNmjAdw0ZAY9JSV9wHEuIbg3/wT6J9AA3wJMaEpCsPxAAJbRe2aRtgd2fu/Z2vD3NnOzM71J0Qfsl9mdw5v/M553v+XNPCzBIZnyEhDAOEAegiEXfYL8+fEZiBmOCoidNCHJm+EbPHCeV9y1h1V9jFHLiTzOr4wL8D2OXwNp8T/I4mGS3KSRzgZswgJO7jKv88G2LrDgF1g/U45RivkAhKJQoFhYKkLiUBfHpS8i36g4QOX3cDZnewHokYsB9KbMYG4d930EtkW6FxDAdySjnY1zVPjRUkqnd2Ti8s/YApbxAIyCrbwZRnSL+3X537jyN7usr95WM4pRINv4l87w+tTWKefCL6hWuvx+3bdEIY2ZDtrgK3hwTm5PYU3VivvNPwi5Go+U90aOYLtkyh5o6c8F7asruZ8g8SJPrREyVT5pTxZzvxxovM4W7HV19BPMWUGyINxSFwZE6NJ3Vo5lZrUWpugGa88pPu2jeDMU93hB6cEpFnD/RT6gJDvkgRCa/K8LILRinh9iHq/EXz+z9ibZKaQzWznT6L79Hwq0lD9KlHr7/ZiXP/pIlZm+TM4ba0epoiHqbhGRopN8cplMhslqn0R9277wMA0rBuJIwWSXfO7sE4PIbeCEBaBGCligBtQnNkTK/dz3o8T8Nq25wwMjoqafgn2YxfW4vg4EgUjpEZiKnuXTSya4foqeiLeMaW3nxOTdzavXT3QnYAWYuSIuYo9Co1y0f0AEbOepQ0sm9oYfo2a5P6ehAYx0g6smc3zhGKEAw4KAwB5g8M0tN/yVq9KNjy2llK+zLSBXLLEDGaY5IEPKzmDQ2eIARGk8wMEfl3aPh1lKSqqnr0dXO6et5Orj49SM+gl5W4cltaPU0nvoqpQ4a2lWahoJHdyPmNr5kh5sk5Rqq0cQ+FhumpEmGx2G9Sw0SD77UoNU/NHl17lk19l9yyajIMG5ME+hYA+w+YGaITt7PLZykVQ/Q1czbjBR5Z+6uauB0cTu22crJlip4Tbz5OJ/5A3bIRPTiFDNlnNb9/r7VWurpndhfivoreBnLfK2W3ReupYNt94+v5AiFh5P4giWGjvXIKarabWtwCQNH9Jo3sY9vo6+Z04kVW3/iTmriNmajjHWgTZogzq/+m1Bmyqo1Cqp6SjMDioxXpjypxDtM7Bv7TSnRj7xr7o4EqtXYxrbDLnZrl1Cyrnjo1d+RrOrz3S1zlN1EM0Iuocv8Sxepv+y163F3vPlxalfq7up16upViyG3jHToUs89Rf+1flKN9EZGZU/Bgf4gZ4xca4z0cLUzfRsOfZFNpq+326I1C/8V338yJl7tYL6qTRWCwx4+23Wv6obajBNvpc3NK/cweebmjPe9OvyMHqvLZyp+eILODFFrY9xWm+BRdJRigz83ZSK9R5L9Rb/VMV7KfTxz30/1QxlG0TcOiZk5pv7Dls+vaf2X6iTWgOTJrk7Qw80XqdoruiPJzjJJzbKRP8Nj5t/sVdcX1aSL6A6hay45Wu72GlvmaG+i4PXb+LZrVeP5/KZ5k1bYWoUPXfBivvbr1EdP7zAgyjKQ18u7HOX7p0k7oJ4qAtQg1cWYuvI5xiroxMK6DuhvYSTt+6eJO6SdPwQpmLQJisbq6F4WMjM24QJEt9ZeTnZqcyIH+Qmon156lG39nyhyp26PnUVs+u7a1nLwfDgytU26LvYFjTifeInSiWrWD9/v013ItTP9D918vLcw81G9Sk9ry9+aK/Zh3oo37zwV2uUnt/PwPek+a/Q6Tf9sAAAAASUVORK5CYII=" style="width:11px;height:11px;object-fit:contain;vertical-align:middle;margin-right:2px">Vindi</button>
           <button class="chip ctx-filter-btn" onclick="setCtxFilter('bcn',this)">🏃 BCN</button>
         </div>
+        <div style="display:flex;gap:6px;margin-bottom:11px" id="type-filter-chips">
+          <button class="chip on" id="cf-tots" onclick="setTypeFilter('tots',this)">Tots</button>
+          <button class="chip" id="cf-individual" onclick="setTypeFilter('individual',this)">👤 Individual</button>
+          <button class="chip" id="cf-parella" onclick="setTypeFilter('parella',this)">👥 Parella</button>
+          <button class="chip" id="cf-grup" onclick="setTypeFilter('grup',this)">👫 Grup</button>
+        </div>
         <div id="client-list"></div>
       </div>
     </div>
@@ -712,16 +718,29 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
   <div class="drawer" id="client-drawer" style="display:none">
     <div class="drawer-handle"></div>
     <div class="drawer-title" id="client-drawer-title">Nou client</div>
+    <div class="drawer-section">Tipus de client</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px" id="client-type-btns">
+      <button class="stype-btn sel" id="ctype-individual" onclick="selectClientType('individual')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #185FA5;background:#E6F1FB;color:#185FA5;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer">👤 Individual</button>
+      <button class="stype-btn" id="ctype-parella" onclick="selectClientType('parella')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #D3D1C7;background:#fff;color:#5F5E5A;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer">👥 Parella</button>
+      <button class="stype-btn" id="ctype-grup" onclick="selectClientType('grup')" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #D3D1C7;background:#fff;color:#5F5E5A;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer">👫 Grup</button>
+    </div>
+    <input type="hidden" id="f-client-type" value="individual">
     <div class="drawer-section">Informació personal</div>
     <div class="field-row">
       <div class="field"><label>Nom *</label><input id="f-nom" placeholder="Nom"></div>
       <div class="field"><label>Cognoms</label><input id="f-cognoms" placeholder="Cognoms"></div>
     </div>
     <div class="field-row">
-      <div class="field"><label>Edat</label><input id="f-edat" type="number" placeholder="anys" min="10" max="99"></div>
+      <div class="field"><label>Data de naixement</label><input id="f-edat" type="date" placeholder="dd/mm/aaaa"></div>
       <div class="field"><label>Telèfon</label><input id="f-tel" type="tel" placeholder="6XX XXX XXX"></div>
     </div>
     <div class="field"><label>Correu electrònic</label><input id="f-email" type="email" placeholder="correu@exemple.com"></div>
+    <!-- Extra members for parella/grup -->
+    <div id="f-extra-members" style="display:none">
+      <div class="drawer-section" id="extra-members-label">Membre 2</div>
+      <div id="extra-members-list"></div>
+      <button class="btn-sec btn-sm" id="add-member-btn" onclick="addExtraMember()" style="display:none;margin-top:4px">+ Afegir membre</button>
+    </div>
     <div class="drawer-section">Context de treball</div>
     <div class="field">
       <label>On entrenes aquest client?</label>
@@ -744,7 +763,8 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <label>Nivell</label><select id="f-nivell"><option>Inicial</option><option>Intermedi</option><option>Avançat</option></select>
     </div>
     <div class="field"><label>Objectiu principal</label>
-      <select id="f-objectiu"><option>Pèrdua de pes</option><option>Tonificació</option><option>Força</option><option>Resistència</option><option>Mobilitat</option><option>Rendiment esportiu</option><option>Rehabilitació</option><option>Altres</option></select>
+      <select id="f-objectiu" onchange="checkCustomObjectiu(this)"></select>
+      <input id="f-objectiu-custom" placeholder="Escriu el nou objectiu..." style="display:none;margin-top:5px;width:100%;padding:7px 10px;font-size:13px;border:0.5px solid #185FA5;border-radius:8px;font-family:inherit;outline:none">
     </div>
     <div class="field-row">
       <div class="field"><label>Sessions/setmana</label><select id="f-sessions-sem"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
@@ -1064,9 +1084,29 @@ function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
 function mondayOf(d){const r=new Date(d);const day=r.getDay();r.setDate(r.getDate()+(day===0?-6:1-day));return r}
 function fmtDate(iso){const d=new Date(iso+'T00:00:00');return d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+d.getFullYear()}
 function fmtMoney(n){return n.toFixed(2).replace('.',',')+' €'}
+function calcAge(dataNaix){
+  if(!dataNaix) return null;
+  const d=new Date(dataNaix+'T00:00:00');
+  const age=Math.floor((new Date()-d)/(365.25*24*3600*1000));
+  return age>0?age:null;
+}
 function getClient(id){return clients.find(c=>c.id===id)}
-function clientName(c){return c.nom+(c.cognoms?' '+c.cognoms:'')}
-function clientInitials(c){return (c.nom[0]+(c.cognoms?c.cognoms[0]:c.nom[1]||'')).toUpperCase()}
+function clientName(c){
+  let name=c.nom+(c.cognoms?' '+c.cognoms:'');
+  if(c.clientType==='parella'&&c.extraMembers?.length){
+    const m=c.extraMembers[0];
+    if(m.nom) name+=' & '+m.nom+(m.cognoms?' '+m.cognoms:'');
+  } else if(c.clientType==='grup'&&c.extraMembers?.length){
+    name+=' +'+c.extraMembers.filter(m=>m.nom).length;
+  }
+  return name;
+}
+function clientInitials(c){
+  const t=c.clientType||'individual';
+  if(t==='parella') return '👥';
+  if(t==='grup') return '👫';
+  return (c.nom[0]+(c.cognoms?c.cognoms[0]:c.nom[1]||'')).toUpperCase();
+}
 function clientColor(c){return COLORS[clients.indexOf(c)%COLORS.length]}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 
@@ -2857,9 +2897,118 @@ function selectCtx(ctx){
   document.getElementById('ctx-vindi').classList.toggle('sel',ctx==='vindi');
   document.getElementById('ctx-bcn').classList.toggle('sel',ctx==='bcn');
 }
+// ── CLIENT TYPE ──
+let clientExtraMembers=[];
+const DEFAULT_OBJECTIUS=['Pèrdua de pes','Tonificació','Força','Resistència','Mobilitat','Rendiment esportiu','Rehabilitació'];
+function getObjectius(){const saved=JSON.parse(localStorage.getItem('prolaia_objectius')||'null');return saved||[...DEFAULT_OBJECTIUS];}
+function saveObjectius(list){localStorage.setItem('prolaia_objectius',JSON.stringify(list));}
+function populateObjectiuSelect(val){
+  const sel=document.getElementById('f-objectiu');if(!sel)return;
+  const opts=getObjectius();
+  sel.innerHTML=opts.map(o=>'<option value="'+o+'">'+o+'</option>').join('')
+    +'<option value="__custom__">+ Nou objectiu...</option>';
+  if(val&&opts.includes(val)) sel.value=val;
+}
+function checkCustomObjectiu(sel){
+  const custom=document.getElementById('f-objectiu-custom');
+  if(sel.value==='__custom__'){
+    custom.style.display='block';custom.focus();
+    custom.onblur=()=>{
+      const nou=custom.value.trim();
+      if(nou){
+        const list=getObjectius();
+        if(!list.includes(nou)){list.push(nou);saveObjectius(list);}
+        populateObjectiuSelect(nou);
+        sel.value=nou;
+      } else {sel.value=list[0]||'';}
+      custom.style.display='none';
+    };
+  } else {custom.style.display='none';}
+}
+function selectClientType(type){
+  document.getElementById('f-client-type').value=type;
+  ['individual','parella','grup'].forEach(t=>{
+    const btn=document.getElementById('ctype-'+t);
+    const active=t===type;
+    btn.style.borderColor=active?'#185FA5':'#D3D1C7';
+    btn.style.background=active?'#E6F1FB':'#fff';
+    btn.style.color=active?'#185FA5':'#5F5E5A';
+  });
+  const extraDiv=document.getElementById('f-extra-members');
+  const addBtn=document.getElementById('add-member-btn');
+  const label=document.getElementById('extra-members-label');
+  if(type==='individual'){
+    extraDiv.style.display='none';
+    clientExtraMembers=[];
+    renderExtraMembers();
+  } else if(type==='parella'){
+    extraDiv.style.display='block';
+    if(addBtn) addBtn.style.display='none';
+    if(label) label.textContent='Membre 2';
+    if(!clientExtraMembers.length) clientExtraMembers=[{nom:'',cognoms:'',tel:'',email:''}];
+    renderExtraMembers();
+  } else {
+    extraDiv.style.display='block';
+    if(addBtn) addBtn.style.display='block';
+    if(label) label.textContent='Altres membres (màx. 3)';
+    if(!clientExtraMembers.length) clientExtraMembers=[{nom:'',cognoms:'',tel:'',email:''}];
+    renderExtraMembers();
+  }
+}
+function renderExtraMembers(){
+  const container=document.getElementById('extra-members-list');if(!container)return;
+  container.innerHTML='';
+  const type=document.getElementById('f-client-type')?.value||'individual';
+  clientExtraMembers.forEach((m,i)=>{
+    const wrap=document.createElement('div');
+    wrap.style.cssText='background:#F8F6F2;border-radius:8px;padding:10px;margin-bottom:8px';
+    const hdr=document.createElement('div');
+    hdr.style.cssText='font-size:10px;font-weight:500;color:#888780;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center';
+    hdr.textContent='Membre '+(i+2);
+    if(type==='grup'&&clientExtraMembers.length>1){
+      const del=document.createElement('button');
+      del.style.cssText='background:none;border:none;color:#E24B4A;cursor:pointer;font-size:14px;padding:0';
+      del.textContent='×';
+      del.onclick=((idx)=>()=>removeExtraMember(idx))(i);
+      hdr.appendChild(del);
+    }
+    wrap.appendChild(hdr);
+    const row1=document.createElement('div');row1.className='field-row';
+    [['Nom','nom'],['Cognoms','cognoms']].forEach(([lbl,key])=>{
+      const f=document.createElement('div');f.className='field';
+      const l=document.createElement('label');l.textContent=lbl.replace('\u0004','');f.appendChild(l);
+      const inp=document.createElement('input');inp.placeholder=lbl.replace('\u0004','');inp.value=m[key]||'';
+      inp.oninput=((idx,k)=>function(){clientExtraMembers[idx][k]=this.value;})(i,key);
+      f.appendChild(inp);row1.appendChild(f);
+    });
+    const row2=document.createElement('div');row2.className='field-row';
+    [['Telèfon','tel','tel'],['Email','email','email']].forEach(([lbl,key,type2])=>{
+      const f=document.createElement('div');f.className='field';
+      const l=document.createElement('label');l.textContent=lbl;f.appendChild(l);
+      const inp=document.createElement('input');inp.type=type2;inp.placeholder=lbl;inp.value=m[key]||'';
+      inp.oninput=((idx,k)=>function(){clientExtraMembers[idx][k]=this.value;})(i,key);
+      f.appendChild(inp);row2.appendChild(f);
+    });
+    wrap.appendChild(row1);wrap.appendChild(row2);
+    container.appendChild(wrap);
+  });
+}
+function addExtraMember(){
+  if(clientExtraMembers.length>=3){toast('Màxim 3 membres addicionals per grup');return;}
+  clientExtraMembers.push({nom:'',cognoms:'',tel:'',email:''});
+  renderExtraMembers();
+}
+function removeExtraMember(i){
+  clientExtraMembers.splice(i,1);
+  renderExtraMembers();
+}
+
 function openClientDrawer(editId){
   document.getElementById('client-drawer-title').textContent=editId?'Editar client':'Nou client';
   ['f-nom','f-cognoms','f-edat','f-tel','f-email','f-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  clientExtraMembers=[];
+  selectClientType('individual');
+  populateObjectiuSelect();
   document.querySelectorAll('.days-check input').forEach(cb=>cb.checked=false);
   selectCtx('vindi'); // default
   if(editId){
@@ -2867,7 +3016,11 @@ function openClientDrawer(editId){
     if(c){
       document.getElementById('f-nom').value=c.nom;
       document.getElementById('f-cognoms').value=c.cognoms||'';
-      document.getElementById('f-edat').value=c.edat||'';
+      document.getElementById('f-edat').value=c.dataNaix||c.edat||'';
+      populateObjectiuSelect(c.objectiu);
+      selectClientType(c.clientType||'individual');
+      if(c.extraMembers) clientExtraMembers=c.extraMembers;
+      renderExtraMembers();
       document.getElementById('f-tel').value=c.tel!=='—'?c.tel:'';
       document.getElementById('f-email').value=c.email!=='—'?c.email:'';
       document.getElementById('f-nivell').value=c.nivell;
@@ -2890,7 +3043,13 @@ function saveClient(){
   if(!nom){toast('⚠ Cal posar el nom del client');return;}
   const dies=[...document.querySelectorAll('.days-check input:checked')].map(cb=>cb.value);
   const editId=parseInt(document.getElementById('client-drawer').dataset.editId)||null;
-  const data={nom,cognoms:document.getElementById('f-cognoms').value.trim(),edat:parseInt(document.getElementById('f-edat').value)||'—',tel:document.getElementById('f-tel').value.trim()||'—',email:document.getElementById('f-email').value.trim()||'—',nivell:document.getElementById('f-nivell').value,objectiu:document.getElementById('f-objectiu').value,context:document.getElementById('f-context').value||'vindi',dies,franja:document.getElementById('f-franja').value,sessSem:parseInt(document.getElementById('f-sessions-sem').value),notes:document.getElementById('f-notes').value.trim()};
+  const dataNaix=document.getElementById('f-edat').value;
+  let edat='—';
+  if(dataNaix){const d=new Date(dataNaix);const age=Math.floor((new Date()-d)/(365.25*24*3600*1000));edat=age>0?age:'—';}
+  const clientType=document.getElementById('f-client-type')?.value||'individual';
+  const data={nom,cognoms:document.getElementById('f-cognoms').value.trim(),
+    dataNaix,edat,clientType,extraMembers:clientType!=='individual'?[...clientExtraMembers]:[],
+    tel:document.getElementById('f-tel').value.trim()||'—',email:document.getElementById('f-email').value.trim()||'—',nivell:document.getElementById('f-nivell').value,objectiu:document.getElementById('f-objectiu').value,context:document.getElementById('f-context').value||'vindi',dies,franja:document.getElementById('f-franja').value,sessSem:parseInt(document.getElementById('f-sessions-sem').value),notes:document.getElementById('f-notes').value.trim()};
   if(editId){
     const idx=clients.findIndex(c=>c.id===editId);
     if(idx>-1){clients[idx]={...clients[idx],...data};toast('✓ Client actualitzat');}
@@ -2904,10 +3063,18 @@ function ctxBadge(c){
   const ctx=c.context||'vindi';
   return ctx==='vindi'?'<span class="badge-vindi"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFWklEQVR42rWXX4xcdRXHP+fcO7NTNBVKd0vJKgqJJoVgNDHG+KovauIDbn3QCBGz0q4NIhhNmjAdw0ZAY9JSV9wHEuIbg3/wT6J9AA3wJMaEpCsPxAAJbRe2aRtgd2fu/Z2vD3NnOzM71J0Qfsl9mdw5v/M553v+XNPCzBIZnyEhDAOEAegiEXfYL8+fEZiBmOCoidNCHJm+EbPHCeV9y1h1V9jFHLiTzOr4wL8D2OXwNp8T/I4mGS3KSRzgZswgJO7jKv88G2LrDgF1g/U45RivkAhKJQoFhYKkLiUBfHpS8i36g4QOX3cDZnewHokYsB9KbMYG4d930EtkW6FxDAdySjnY1zVPjRUkqnd2Ti8s/YApbxAIyCrbwZRnSL+3X537jyN7usr95WM4pRINv4l87w+tTWKefCL6hWuvx+3bdEIY2ZDtrgK3hwTm5PYU3VivvNPwi5Go+U90aOYLtkyh5o6c8F7asruZ8g8SJPrREyVT5pTxZzvxxovM4W7HV19BPMWUGyINxSFwZE6NJ3Vo5lZrUWpugGa88pPu2jeDMU93hB6cEpFnD/RT6gJDvkgRCa/K8LILRinh9iHq/EXz+z9ibZKaQzWznT6L79Hwq0lD9KlHr7/ZiXP/pIlZm+TM4ba0epoiHqbhGRopN8cplMhslqn0R9277wMA0rBuJIwWSXfO7sE4PIbeCEBaBGCligBtQnNkTK/dz3o8T8Nq25wwMjoqafgn2YxfW4vg4EgUjpEZiKnuXTSya4foqeiLeMaW3nxOTdzavXT3QnYAWYuSIuYo9Co1y0f0AEbOepQ0sm9oYfo2a5P6ehAYx0g6smc3zhGKEAw4KAwB5g8M0tN/yVq9KNjy2llK+zLSBXLLEDGaY5IEPKzmDQ2eIARGk8wMEfl3aPh1lKSqqnr0dXO6et5Orj49SM+gl5W4cltaPU0nvoqpQ4a2lWahoJHdyPmNr5kh5sk5Rqq0cQ+FhumpEmGx2G9Sw0SD77UoNU/NHl17lk19l9yyajIMG5ME+hYA+w+YGaITt7PLZykVQ/Q1czbjBR5Z+6uauB0cTu22crJlip4Tbz5OJ/5A3bIRPTiFDNlnNb9/r7VWurpndhfivoreBnLfK2W3ReupYNt94+v5AiFh5P4giWGjvXIKarabWtwCQNH9Jo3sY9vo6+Z04kVW3/iTmriNmajjHWgTZogzq/+m1Bmyqo1Cqp6SjMDioxXpjypxDtM7Bv7TSnRj7xr7o4EqtXYxrbDLnZrl1Cyrnjo1d+RrOrz3S1zlN1EM0Iuocv8Sxepv+y163F3vPlxalfq7up16upViyG3jHToUs89Rf+1flKN9EZGZU/Bgf4gZ4xca4z0cLUzfRsOfZFNpq+326I1C/8V338yJl7tYL6qTRWCwx4+23Wv6obajBNvpc3NK/cweebmjPe9OvyMHqvLZyp+eILODFFrY9xWm+BRdJRigz83ZSK9R5L9Rb/VMV7KfTxz30/1QxlG0TcOiZk5pv7Dls+vaf2X6iTWgOTJrk7Qw80XqdoruiPJzjJJzbKRP8Nj5t/sVdcX1aSL6A6hay45Wu72GlvmaG+i4PXb+LZrVeP5/KZ5k1bYWoUPXfBivvbr1EdP7zAgyjKQ18u7HOX7p0k7oJ4qAtQg1cWYuvI5xiroxMK6DuhvYSTt+6eJO6SdPwQpmLQJisbq6F4WMjM24QJEt9ZeTnZqcyIH+Qmon156lG39nyhyp26PnUVs+u7a1nLwfDgytU26LvYFjTifeInSiWrWD9/v013ItTP9D918vLcw81G9Sk9ry9+aK/Zh3oo37zwV2uUnt/PwPek+a/Q6Tf9sAAAAASUVORK5CYII=" style="width:11px;height:11px;object-fit:contain;vertical-align:middle;margin-right:2px">Vindi</span>':'<span class="badge-bcn">🏃 BCN</span>';
 }
+let activeTypeFilter='tots';
+function setTypeFilter(type,btn){
+  activeTypeFilter=type;
+  document.querySelectorAll('#type-filter-chips .chip').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderClients();
+}
 function renderClients(filter='',ctxFilter='all'){
   let list=filter?clients.filter(c=>clientName(c).toLowerCase().includes(filter.toLowerCase())):clients;
   if(ctxFilter==='vindi') list=list.filter(c=>(c.context||'vindi')==='vindi');
   if(ctxFilter==='bcn') list=list.filter(c=>c.context==='bcn');
+  if(activeTypeFilter&&activeTypeFilter!=='tots') list=list.filter(c=>(c.clientType||'individual')===activeTypeFilter);
   document.getElementById('client-list').innerHTML=list.length?list.map(c=>{
     const sessDone=sessions.filter(s=>s.clientIds.includes(c.id)&&s.status==='done').length;
     return `<div class="client-card" onclick="openClientDetail(${c.id})">
