@@ -428,31 +428,32 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 </style>
 </head>
 <body>
-<div id="pin-screen" style="position:fixed;inset:0;background:#F0EEE8;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px">
-  <div style="margin-bottom:32px;text-align:center">
-    <div style="font-size:36px;margin-bottom:10px">🔒</div>
-    <div style="font-size:22px;font-weight:500;color:#2C2C2A">ProLaia</div>
-    <div style="font-size:13px;color:#888780;margin-top:4px">Introdueix el PIN per entrar</div>
+<div id="login-screen" style="position:fixed;inset:0;background:#F0EEE8;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px">
+  <div style="width:100%;max-width:340px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:40px;margin-bottom:10px">💪</div>
+      <div style="font-size:24px;font-weight:600;color:#2C2C2A">ProLaia</div>
+      <div style="font-size:13px;color:#888780;margin-top:4px">Accés entrenadora personal</div>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,0.08)">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:#5F5E5A;font-weight:500;display:block;margin-bottom:4px">Correu electrònic</label>
+        <input id="login-email" type="email" placeholder="correu@exemple.com" autocomplete="email"
+          style="width:100%;padding:10px 12px;font-size:14px;border:0.5px solid #D3D1C7;border-radius:8px;font-family:inherit;outline:none;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;color:#5F5E5A;font-weight:500;display:block;margin-bottom:4px">Contrasenya</label>
+        <div style="position:relative">
+          <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password"
+            style="width:100%;padding:10px 12px;font-size:14px;border:0.5px solid #D3D1C7;border-radius:8px;font-family:inherit;outline:none;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')doLogin()">
+          <button onclick="togglePasswordVisible()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888780;font-size:14px" id="pw-toggle">👁</button>
+        </div>
+      </div>
+      <div id="login-error" style="font-size:12px;color:#E24B4A;margin-bottom:12px;min-height:16px;text-align:center"></div>
+      <button onclick="doLogin()" id="login-btn" style="width:100%;padding:12px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit">Entrar</button>
+    </div>
   </div>
-  <div id="pin-dots" style="display:flex;gap:14px;margin-bottom:24px">
-    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-  </div>
-  <div id="pin-error" style="font-size:12px;color:#E24B4A;margin-bottom:16px;min-height:18px;text-align:center"></div>
-  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px">
-    <button class="pin-key" onclick="pinPress('1')">1</button>
-    <button class="pin-key" onclick="pinPress('2')">2</button>
-    <button class="pin-key" onclick="pinPress('3')">3</button>
-    <button class="pin-key" onclick="pinPress('4')">4</button>
-    <button class="pin-key" onclick="pinPress('5')">5</button>
-    <button class="pin-key" onclick="pinPress('6')">6</button>
-    <button class="pin-key" onclick="pinPress('7')">7</button>
-    <button class="pin-key" onclick="pinPress('8')">8</button>
-    <button class="pin-key" onclick="pinPress('9')">9</button>
-    <div></div>
-    <button class="pin-key" onclick="pinPress('0')">0</button>
-    <button class="pin-key" onclick="pinDel()">⌫</button>
-  </div>
-  <div style="margin-top:28px;font-size:11px;color:#B4B2A9">Pots canviar el PIN des de Configuració</div>
 </div>
 <!-- TIME PICKER MODAL -->
 <div id="time-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9990;align-items:center;justify-content:center;padding:20px">
@@ -1269,81 +1270,6 @@ function closeTimePicker(){
 }
 
 
-const DEFAULT_PIN='1234';
-let pinBuffer='';
-function getStoredPin(){return localStorage.getItem('prolaia_pin')||DEFAULT_PIN;}
-function pinPress(d){
-  if(pinBuffer.length>=4) return;
-  pinBuffer+=d;
-  updatePinDots();
-  if(pinBuffer.length===4) setTimeout(checkPin,100);
-}
-function pinDel(){
-  pinBuffer=pinBuffer.slice(0,-1);
-  updatePinDots();
-  document.getElementById('pin-error').textContent='';
-}
-function updatePinDots(){
-  const dots=document.querySelectorAll('.pin-dot');
-  dots.forEach((d,i)=>{
-    d.classList.toggle('filled',i<pinBuffer.length);
-    d.classList.remove('error');
-  });
-}
-function checkPin(){
-  if(pinBuffer===getStoredPin()){
-    const screen=document.getElementById('pin-screen');
-    const isFirst=!localStorage.getItem('prolaia_welcomed');
-    if(isFirst){
-      localStorage.setItem('prolaia_welcomed','1');
-      showWelcome(screen);
-    } else {
-      screen.style.transition='opacity 0.3s';
-      screen.style.opacity='0';
-      setTimeout(()=>screen.style.display='none',300);
-    }
-    sessionStorage.setItem('prolaia_unlocked','1');
-  } else {
-    document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));
-    document.getElementById('pin-error').textContent='PIN incorrecte, torna-ho a intentar';
-    setTimeout(()=>{
-      pinBuffer='';
-      updatePinDots();
-      document.getElementById('pin-error').textContent='';
-    },900);
-  }
-}
-function showWelcome(screen){
-  screen.innerHTML=`
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;animation:fadeIn 0.5s ease">
-      <div style="font-size:56px">👋</div>
-      <div style="text-align:center">
-        <div style="font-size:26px;font-weight:500;color:#2C2C2A">Benvinguda, Laia!</div>
-        <div style="font-size:14px;color:#888780;margin-top:8px">La teva app d'entrenadora personal</div>
-      </div>
-      <div style="font-size:13px;color:#B4B2A9;margin-top:8px">Preparat per organitzar les teves sessions 💪</div>
-    </div>`;
-  screen.style.opacity='1';
-  screen.style.background='#F0EEE8';
-  setTimeout(()=>{
-    screen.style.transition='opacity 0.5s';
-    screen.style.opacity='0';
-    setTimeout(()=>screen.style.display='none',500);
-  },2200);
-}
-
-// Check if already unlocked this session
-if(sessionStorage.getItem('prolaia_unlocked')==='1'){
-  const s=document.getElementById('pin-screen');
-  if(s) s.style.display='none';
-}
-// Also allow keyboard input
-document.addEventListener('keydown',e=>{
-  const screen=document.getElementById('pin-screen');
-  if(!screen||screen.style.display==='none') return;
-  if(e.key>='0'&&e.key<='9') pinPress(e.key);
-  if(e.key==='Backspace') pinDel();
-});
 
 // ══════════════════════════════════════
 // CONFIGURACIÓ — edita aquí si cal canviar
@@ -1537,45 +1463,6 @@ function exportData(){
 function downloadBackupFile(content,filename){
   showBackupText(content,filename);
 }
-function showChangePinDrawer(){
-  let modal=document.getElementById('backup-modal');
-  if(!modal){modal=document.createElement('div');modal.id='backup-modal';modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;flex-direction:column;padding:20px';document.body.appendChild(modal);}
-  modal.innerHTML=`
-    <div style="background:#F0EEE8;border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px">
-      <div style="font-size:15px;font-weight:500;color:#2C2C2A">Canviar PIN</div>
-      <div>
-        <label style="font-size:11px;color:#888780;display:block;margin-bottom:4px">PIN actual</label>
-        <input type="password" inputmode="numeric" maxlength="4" id="pin-old" placeholder="••••" style="width:100%;padding:8px 12px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:16px;font-family:inherit;background:#fff;letter-spacing:6px">
-      </div>
-      <div>
-        <label style="font-size:11px;color:#888780;display:block;margin-bottom:4px">PIN nou (4 dígits)</label>
-        <input type="password" inputmode="numeric" maxlength="4" id="pin-new" placeholder="••••" style="width:100%;padding:8px 12px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:16px;font-family:inherit;background:#fff;letter-spacing:6px">
-      </div>
-      <div>
-        <label style="font-size:11px;color:#888780;display:block;margin-bottom:4px">Confirma el PIN nou</label>
-        <input type="password" inputmode="numeric" maxlength="4" id="pin-confirm" placeholder="••••" style="width:100%;padding:8px 12px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:16px;font-family:inherit;background:#fff;letter-spacing:6px">
-      </div>
-      <div id="pin-change-error" style="font-size:12px;color:#E24B4A;min-height:16px"></div>
-      <div style="display:flex;gap:8px">
-        <button onclick="
-          const old=document.getElementById('pin-old').value;
-          const nw=document.getElementById('pin-new').value;
-          const conf=document.getElementById('pin-confirm').value;
-          const err=document.getElementById('pin-change-error');
-          if(old!==getStoredPin()){err.textContent='PIN actual incorrecte';return;}
-          if(nw.length!==4||!/^[0-9]{4}$/.test(nw)){err.textContent='El PIN ha de tenir 4 dígits';return;}
-          if(nw!==conf){err.textContent='Els PINs nous no coincideixen';return;}
-          localStorage.setItem('prolaia_pin',nw);
-          document.getElementById('backup-modal').style.display='none';
-          toast('✓ PIN canviat correctament');
-        " style="flex:1;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">Desar PIN</button>
-        <button onclick="document.getElementById('backup-modal').style.display='none'" style="padding:10px 16px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Cancel·lar</button>
-      </div>
-    </div>`;
-  modal.style.display='flex';
-  setTimeout(()=>document.getElementById('pin-old')?.focus(),200);
-}
-
 function showPasteRestore(){
   let modal=document.getElementById('backup-modal');
   if(!modal){
@@ -4774,7 +4661,8 @@ async function loadAndShowSettings(){
     </div>
     <div style="background:#F8F6F2;border:0.5px solid #D3D1C7;border-radius:8px;padding:10px 13px;margin-top:8px">
       <div style="font-size:11px;font-weight:500;color:#2C2C2A;margin-bottom:6px">Seguretat</div>
-      <button class="btn-sec" style="width:100%" onclick="showChangePinDrawer()">🔒 Canviar PIN d'accés</button>
+      <button class="btn-sec" style="width:100%;margin-bottom:6px" onclick="showChangePasswordDrawer()">🔒 Canviar contrasenya</button>
+      <button class="btn-sec" style="width:100%;color:#E24B4A" onclick="doLogout();closeDrawer()">↩ Tancar sessió</button>
     </div>
     <div class="drawer-section" style="margin-top:12px">Historial de còpies al núvol</div>
     <div id="sb-backups-list"><div style="font-size:11px;color:#888780;text-align:center;padding:10px">Carregant...</div></div>
@@ -4884,4 +4772,106 @@ if(window.location.protocol!=='file:'){
 
 </script>
 </body>
-</html>
+</html>// ── AUTH ──
+let authToken=null;
+let authUser=null;
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('login-error');
+  if(!email||!pw){err.textContent='Introdueix el correu i la contrasenya';return;}
+  btn.textContent='Entrant...';btn.disabled=true;err.textContent='';
+  try{
+    const res=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pw})
+    });
+    const data=await res.json();
+    if(!data.access_token){
+      err.textContent='Correu o contrasenya incorrectes';
+      btn.textContent='Entrar';btn.disabled=false;return;
+    }
+    authToken=data.access_token;
+    authUser=data.user;
+    sessionStorage.setItem('prolaia_token',authToken);
+    sessionStorage.setItem('prolaia_user',JSON.stringify(authUser));
+    const screen=document.getElementById('login-screen');
+    const isFirst=!localStorage.getItem('prolaia_welcomed');
+    if(isFirst){
+      localStorage.setItem('prolaia_welcomed','1');
+      showWelcome(screen);
+    } else {
+      screen.style.transition='opacity 0.3s';
+      screen.style.opacity='0';
+      setTimeout(()=>screen.style.display='none',300);
+    }
+    const ind=document.getElementById('sync-indicator');
+    if(ind) ind.style.display='flex';
+    const ok=await sbLoad();
+    if(ind) ind.style.display='none';
+    if(ok){lsSave();refreshAll();}
+  }catch(e){
+    err.textContent='Error de connexió. Torna-ho a intentar.';
+    btn.textContent='Entrar';btn.disabled=false;
+  }
+}
+
+function togglePasswordVisible(){
+  const inp=document.getElementById('login-password');
+  const btn=document.getElementById('pw-toggle');
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁':'🙈';
+}
+
+async function doLogout(){
+  if(authToken){
+    await fetch(SB_URL+'/auth/v1/logout',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+authToken,'Content-Type':'application/json'}
+    }).catch(()=>{});
+  }
+  authToken=null;authUser=null;
+  sessionStorage.removeItem('prolaia_token');
+  sessionStorage.removeItem('prolaia_user');
+  const screen=document.getElementById('login-screen');
+  if(screen){screen.style.display='flex';screen.style.opacity='1';}
+  document.getElementById('login-email').value='';
+  document.getElementById('login-password').value='';
+  document.getElementById('login-error').textContent='';
+  document.getElementById('login-btn').textContent='Entrar';
+  document.getElementById('login-btn').disabled=false;
+  toast('Sessió tancada');
+}
+
+function showWelcome(screen){
+  screen.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px">'
+    +'<div style="font-size:56px">👋</div>'
+    +'<div style="text-align:center"><div style="font-size:26px;font-weight:500;color:#2C2C2A">Benvinguda, Laia!</div>'
+    +'<div style="font-size:14px;color:#888780;margin-top:8px">La teva app d\'entrenadora personal</div></div>'
+    +'<div style="font-size:13px;color:#B4B2A9">Preparat per organitzar les teves sessions 💪</div>'
+    +'</div>';
+  screen.style.opacity='1';screen.style.background='#F0EEE8';
+  setTimeout(()=>{
+    screen.style.transition='opacity 0.5s';screen.style.opacity='0';
+    setTimeout(()=>screen.style.display='none',500);
+  },2200);
+}
+
+// Check if already logged in this session
+const _savedToken=sessionStorage.getItem('prolaia_token');
+if(_savedToken){
+  authToken=_savedToken;
+  try{authUser=JSON.parse(sessionStorage.getItem('prolaia_user')||'null');}catch(e){}
+  const s=document.getElementById('login-screen');
+  if(s) s.style.display='none';
+}
+document.addEventListener('keydown',e=>{
+  const screen=document.getElementById('login-screen');
+  if(!screen||screen.style.display==='none') return;
+  if(e.key==='Enter') doLogin();
+});
+
+
