@@ -1281,7 +1281,13 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 async function sbFetch(path,method,body){
   try{
     const isUpsert=path.includes('on_conflict');
-    const opts={method:method||'GET',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':isUpsert?'resolution=merge-duplicates':'return=minimal'}};
+    const headers={
+      'apikey':SB_KEY,
+      'Authorization':'Bearer '+(authToken||SB_KEY),
+      'Content-Type':'application/json',
+      'Prefer':isUpsert?'resolution=merge-duplicates':'return=minimal'
+    };
+    const opts={method:method||'GET',headers};
     if(body) opts.body=JSON.stringify(body);
     const res=await fetch(SB_URL+'/rest/v1/'+path,opts);
     if(!res.ok){const t=await res.text();console.warn('Supabase error:',res.status,t);return null;}
