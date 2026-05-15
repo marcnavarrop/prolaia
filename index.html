@@ -455,29 +455,6 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     </div>
   </div>
 </div>
-<!-- SYSTEM DRAWER -->
-<div class="drawer" id="system-drawer" style="display:none">
-  <div class="drawer-handle"></div>
-  <div class="drawer-title" id="system-drawer-title">Nou sistema</div>
-  <input type="hidden" id="sys-edit-id">
-  <div class="field"><label>Nom *</label><input id="sys-nom" placeholder="Ex: Tabata, HIIT, Circuit..."></div>
-  <div class="field"><label>Descripció (opcional)</label><input id="sys-desc" placeholder="Ex: 20&quot; treball / 10&quot; descans"></div>
-  <div class="field"><label>Color</label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap" id="sys-colors">
-      <div class="color-opt selected" data-color="#F5A623" style="width:28px;height:28px;border-radius:50%;background:#F5A623;cursor:pointer;border:3px solid #2C2C2A"></div>
-      <div class="color-opt" data-color="#185FA5" style="width:28px;height:28px;border-radius:50%;background:#185FA5;cursor:pointer;border:3px solid transparent"></div>
-      <div class="color-opt" data-color="#1D9E75" style="width:28px;height:28px;border-radius:50%;background:#1D9E75;cursor:pointer;border:3px solid transparent"></div>
-      <div class="color-opt" data-color="#E24B4A" style="width:28px;height:28px;border-radius:50%;background:#E24B4A;cursor:pointer;border:3px solid transparent"></div>
-      <div class="color-opt" data-color="#854F0B" style="width:28px;height:28px;border-radius:50%;background:#854F0B;cursor:pointer;border:3px solid transparent"></div>
-      <div class="color-opt" data-color="#534AB7" style="width:28px;height:28px;border-radius:50%;background:#534AB7;cursor:pointer;border:3px solid transparent"></div>
-      <div class="color-opt" data-color="#888780" style="width:28px;height:28px;border-radius:50%;background:#888780;cursor:pointer;border:3px solid transparent"></div>
-    </div>
-  </div>
-  <div class="drawer-actions">
-    <button class="btn-sec" onclick="closeDrawer()">Cancel·lar</button>
-    <button class="btn-main" onclick="saveSystem()">Desar</button>
-  </div>
-</div>
 
 <!-- WORKOUT VIEW MODAL -->
 <div id="workout-modal" style="display:none;position:fixed;inset:0;background:#1A1A18;z-index:9980;overflow-y:auto">
@@ -630,26 +607,28 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       </div>
       <!-- Exercises panel -->
       <div id="ex-panel-exercises">
-        <input class="search" id="ex-search" placeholder="Cercar exercici..." oninput="filterExercises(this.value)">
-        <button class="btn-sec btn-sm" onclick="openGroupDrawer()" title="Gestionar grups">⊞ Grups</button>
-        <button class="btn-main btn-sm" onclick="openExerciseDrawer()">+ nou</button>
+        <!-- Search bar -->
+        <div class="flex-row" style="margin-bottom:10px">
+          <input class="search" id="ex-search" placeholder="Cercar exercici..." oninput="filterExercises(this.value)">
+          <button class="btn-sec btn-sm" onclick="openGroupDrawer()" title="Gestionar grups">⊞ Grups</button>
+          <button class="btn-main btn-sm" onclick="openExerciseDrawer()">+ nou</button>
+        </div>
+        <!-- Import CSV -->
+        <div id="ex-import-bar" style="background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;gap:8px;align-items:center">
+          <span style="font-size:11px;color:#3C3489;flex:1">Carrega molts exercicis de cop amb un CSV</span>
+          <label style="cursor:pointer">
+            <span class="btn-purple btn-sm" style="padding:4px 9px">↑ Importar CSV</span>
+            <input type="file" accept=".csv" style="display:none" onchange="importExercisesCSV(this)">
+          </label>
+          <button class="icon-btn" onclick="document.getElementById('ex-import-bar').style.display='none'" title="Tancar">✕</button>
+        </div>
+        <!-- Group tabs -->
+        <div id="ex-group-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+        <!-- Subgroup chips -->
+        <div id="ex-subgroup-chips" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:10px;padding:8px 10px;background:#fff;border-radius:10px;border:0.5px solid #D3D1C7"></div>
+        <!-- Exercise list -->
+        <div id="exercise-list"></div>
       </div>
-      <!-- Import CSV -->
-      <div id="ex-import-bar" style="background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;gap:8px;align-items:center">
-        <span style="font-size:11px;color:#3C3489;flex:1">Carrega molts exercicis de cop amb un CSV</span>
-        <label style="cursor:pointer">
-          <span class="btn-purple btn-sm" style="padding:4px 9px">↑ Importar CSV</span>
-          <input type="file" accept=".csv" style="display:none" onchange="importExercisesCSV(this)">
-        </label>
-        <button class="icon-btn" onclick="document.getElementById('ex-import-bar').style.display='none'" title="Tancar">✕</button>
-      </div>
-      <!-- Group tabs -->
-      <div id="ex-group-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
-      <!-- Subgroup chips — appear below group tabs when a group has subgroups -->
-      <div id="ex-subgroup-chips" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:10px;padding:8px 10px;background:#fff;border-radius:10px;border:0.5px solid #D3D1C7"></div>
-      <!-- Exercise list -->
-      <div id="exercise-list"></div>
-      </div><!-- end ex-panel-exercises -->
       <!-- Systems panel -->
       <div id="ex-panel-systems" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -765,6 +744,30 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 
 <!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="overlayClick(event)">
+<!-- SYSTEM DRAWER -->
+<div class="drawer" id="system-drawer" style="display:none">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title" id="system-drawer-title">Nou sistema</div>
+  <input type="hidden" id="sys-edit-id">
+  <div class="field"><label>Nom *</label><input id="sys-nom" placeholder="Ex: Tabata, HIIT, Circuit..."></div>
+  <div class="field"><label>Descripció (opcional)</label><input id="sys-desc" placeholder="Ex: 20&quot; treball / 10&quot; descans"></div>
+  <div class="field"><label>Color</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="sys-colors">
+      <div class="color-opt selected" data-color="#F5A623" style="width:28px;height:28px;border-radius:50%;background:#F5A623;cursor:pointer;border:3px solid #2C2C2A"></div>
+      <div class="color-opt" data-color="#185FA5" style="width:28px;height:28px;border-radius:50%;background:#185FA5;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#1D9E75" style="width:28px;height:28px;border-radius:50%;background:#1D9E75;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#E24B4A" style="width:28px;height:28px;border-radius:50%;background:#E24B4A;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#854F0B" style="width:28px;height:28px;border-radius:50%;background:#854F0B;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#534AB7" style="width:28px;height:28px;border-radius:50%;background:#534AB7;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#888780" style="width:28px;height:28px;border-radius:50%;background:#888780;cursor:pointer;border:3px solid transparent"></div>
+    </div>
+  </div>
+  <div class="drawer-actions">
+    <button class="btn-sec" onclick="closeDrawer()">Cancel·lar</button>
+    <button class="btn-main" onclick="saveSystem()">Desar</button>
+  </div>
+</div>
+
 
   <!-- CLIENT DRAWER -->
   <div class="drawer" id="client-drawer" style="display:none">
@@ -867,21 +870,22 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <div class="field"><label>Durada</label><select id="sf-durada"><option>30 min</option><option>45 min</option><option selected>60 min</option><option>90 min</option></select></div>
       <div class="field"><label>Preu (€)</label><input id="sf-preu" type="number" placeholder="20.25" min="0" step="0.01"></div>
     </div>
-    <div class="field"><label>Notes de la sessió (opcional)</label><textarea id="sf-notes" placeholder="Objectius, observacions…" style="min-height:52px"></textarea></div>
-
     <!-- BLOC-BASED EXERCISE PLANNING -->
-    <div style="background:#185FA5;border-radius:10px;padding:12px 14px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+    <div onclick="addSessionBlock()" style="background:#185FA5;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">💪</span>
         <div>
-          <div style="font-size:13px;font-weight:500;color:#fff">Exercicis per blocs</div>
-          <div style="font-size:11px;color:#B5D4F4;margin-top:1px" id="sf-ex-count">Toca per afegir blocs d'entrenament</div>
+          <div style="font-size:13px;font-weight:500;color:#fff">Planificar entrenament</div>
+          <div style="font-size:11px;color:#B5D4F4;margin-top:1px" id="sf-ex-count">Toca per afegir un bloc</div>
         </div>
       </div>
-      <button onclick="addSessionBlock()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit">+ Bloc</button>
+      <span style="font-size:20px;color:#B5D4F4;font-weight:300">+</span>
     </div>
     <!-- Blocks list -->
     <div id="sf-blocks-container" style="margin-bottom:4px"></div>
+    <div id="sf-add-bloc-btn" style="display:none;margin-bottom:8px">
+      <button onclick="addSessionBlock()" style="width:100%;padding:8px;background:#F0EEE8;border:1.5px dashed #185FA5;border-radius:8px;color:#185FA5;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit">+ Afegir un altre bloc</button>
+    </div>
 
     <div class="drawer-section">Notes de la sessió</div>
     <textarea id="sf-notes" placeholder="Objectius, observacions…" style="width:100%;min-height:52px;padding:8px 10px;font-size:13px;border:0.5px solid #D3D1C7;border-radius:8px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
@@ -1550,38 +1554,73 @@ function initSessionBlocks(){
 }
 
 function addSessionBlock(){
-  // Open system picker
-  if(!trainingSystems.length){toast('Primer crea un sistema a la pestaña Exercicis → Sistemes');return;}
+  if(!trainingSystems.length){toast('Primer crea un sistema a Exercicis → Sistemes');return;}
   const modal=document.getElementById('backup-modal');
-  if(!modal){return;}
-  modal.innerHTML='';
-  modal.style.display='flex';
+  if(!modal) return;
+  modal.innerHTML='';modal.style.display='flex';
   const box=document.createElement('div');
-  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:20px;max-height:80vh;overflow-y:auto;width:100%';
-  const title=document.createElement('div');
-  title.style.cssText='font-size:15px;font-weight:500;color:#2C2C2A;margin-bottom:14px';
-  title.textContent='Selecciona el sistema del bloc';
-  box.appendChild(title);
+  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:20px;width:100%;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px';
+  const t1=document.createElement('div');t1.style.cssText='font-size:14px;font-weight:500;color:#2C2C2A';t1.textContent='1. Selecciona el sistema';box.appendChild(t1);
+  const sysList=document.createElement('div');sysList.style.cssText='display:flex;flex-direction:column;gap:6px';
+  let selectedSys=null,selectedMesura='reps';
+  const sysCards=[];
   trainingSystems.forEach(sys=>{
-    const btn=document.createElement('button');
-    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;padding:11px 13px;background:#fff;border:0.5px solid #D3D1C7;border-radius:9px;margin-bottom:7px;cursor:pointer;font-family:inherit;text-align:left';
-    const dot=document.createElement('div');
-    dot.style.cssText='width:12px;height:12px;border-radius:50%;background:'+sys.color+';flex-shrink:0';
+    const btn=document.createElement('div');
+    btn.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 13px;background:#fff;border:2px solid #D3D1C7;border-radius:9px;cursor:pointer';
+    const dot=document.createElement('div');dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+sys.color+';flex-shrink:0';
     const info=document.createElement('div');
     info.innerHTML='<div style="font-size:13px;font-weight:500;color:#2C2C2A">'+sys.nom+'</div>'+(sys.desc?'<div style="font-size:11px;color:#888780">'+sys.desc+'</div>':'');
     btn.appendChild(dot);btn.appendChild(info);
-    btn.onclick=((s)=>()=>{
-      sessionBlocks.push({systemId:s.id,systemNom:s.nom,systemColor:s.color,exercises:[]});
-      modal.style.display='none';
-      renderSessionBlocks();
+    btn.onclick=(s=>()=>{
+      selectedSys=s;
+      sysCards.forEach(b=>b.style.borderColor='#D3D1C7');
+      btn.style.borderColor=s.color;
+      mesuraSection.style.display='flex';
     })(sys);
-    box.appendChild(btn);
+    sysList.appendChild(btn);sysCards.push(btn);
   });
-  const cancel=document.createElement('button');
-  cancel.style.cssText='width:100%;padding:10px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px';
-  cancel.textContent='Cancel·lar';
-  cancel.onclick=()=>modal.style.display='none';
-  box.appendChild(cancel);
+  box.appendChild(sysList);
+  const mesuraSection=document.createElement('div');
+  mesuraSection.style.cssText='display:none;flex-direction:column;gap:8px;margin-top:4px';
+  const t2=document.createElement('div');t2.style.cssText='font-size:14px;font-weight:500;color:#2C2C2A';t2.textContent='2. Tipus de mesura del bloc';
+  const mesuraBtns=document.createElement('div');mesuraBtns.style.cssText='display:flex;gap:8px';
+  const repsBtn=document.createElement('button');
+  repsBtn.style.cssText='flex:1;padding:10px;border:2px solid #185FA5;border-radius:8px;background:#E6F1FB;color:#185FA5;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer';
+  repsBtn.textContent='🔢 Repeticions';
+  const secsBtn=document.createElement('button');
+  secsBtn.style.cssText='flex:1;padding:10px;border:2px solid #D3D1C7;border-radius:8px;background:#fff;color:#5F5E5A;font-family:inherit;font-size:13px;cursor:pointer';
+  secsBtn.textContent='⏱ Segons';
+  function setMesura(m){
+    selectedMesura=m;
+    repsBtn.style.borderColor=m==='reps'?'#185FA5':'#D3D1C7';
+    repsBtn.style.background=m==='reps'?'#E6F1FB':'#fff';
+    repsBtn.style.color=m==='reps'?'#185FA5':'#5F5E5A';
+    secsBtn.style.borderColor=m==='seconds'?'#185FA5':'#D3D1C7';
+    secsBtn.style.background=m==='seconds'?'#E6F1FB':'#fff';
+    secsBtn.style.color=m==='seconds'?'#185FA5':'#5F5E5A';
+  }
+  repsBtn.onclick=()=>setMesura('reps');
+  secsBtn.onclick=()=>setMesura('seconds');
+  mesuraBtns.appendChild(repsBtn);mesuraBtns.appendChild(secsBtn);
+  mesuraSection.appendChild(t2);mesuraSection.appendChild(mesuraBtns);
+  box.appendChild(mesuraSection);
+  const confirmBtn=document.createElement('button');
+  confirmBtn.style.cssText='padding:11px;background:#185FA5;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px';
+  confirmBtn.textContent='Crear bloc i afegir exercicis →';
+  confirmBtn.onclick=()=>{
+    if(!selectedSys){toast('Selecciona un sistema primer');return;}
+    sessionBlocks.push({systemId:selectedSys.id,systemNom:selectedSys.nom,systemColor:selectedSys.color,systemDesc:selectedSys.desc||'',mesura:selectedMesura,exercises:[]});
+    modal.style.display='none';
+    renderSessionBlocks();
+    setTimeout(()=>openBlockExPicker(sessionBlocks.length-1),200);
+  };
+  const cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='padding:10px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit';
+  cancelBtn.textContent='Cancel·lar';
+  cancelBtn.onclick=()=>modal.style.display='none';
+  const row=document.createElement('div');row.style.cssText='display:flex;gap:8px';
+  row.appendChild(cancelBtn);row.appendChild(confirmBtn);
+  box.appendChild(row);
   modal.appendChild(box);
 }
 
@@ -2682,15 +2721,7 @@ function setSfTab(tab){
 }
 
 // ── Toggle panel open/close ──
-function toggleSfExPanel(){
-  sfExPanelOpen=!sfExPanelOpen;
-  document.getElementById('sf-ex-panel').style.display=sfExPanelOpen?'block':'none';
-  const arrow=document.getElementById('sf-ex-arrow');
-  const header=document.getElementById('sf-ex-closed');
-  if(arrow) arrow.style.transform=sfExPanelOpen?'rotate(90deg)':'rotate(0deg)';
-  if(header) header.style.background=sfExPanelOpen?'#0C447C':'#185FA5';
-  if(sfExPanelOpen) setSfTab(sfActiveTab);
-}
+function toggleSfExPanel(){/* replaced by block system */}
 
 // ── HISTORIAL TAB ──
 function renderSfHistPanel(){
@@ -3016,22 +3047,10 @@ function openSessionDrawer(preClientId){
   sfExSelected=[];sfExPanelOpen=false;sfExActiveGroup=null;sfActiveTab='hist';
   sessionBlocks=[];
   renderSessionBlocks();
-  document.getElementById('sf-ex-panel').style.display='none';
-  document.getElementById('sf-client-history').style.display='none';
-  const arrow=document.getElementById('sf-ex-arrow');
-  const hdr=document.getElementById('sf-ex-closed');
-  if(arrow) arrow.style.transform='rotate(0deg)';
-  if(hdr) hdr.style.background='#185FA5';
-  document.getElementById('sf-ex-selected').innerHTML='';
+  const sfHist=document.getElementById('sf-client-history');
+  if(sfHist) sfHist.style.display='none';
   const countEl=document.getElementById('sf-ex-count');
-  if(countEl) countEl.textContent='Toca per afegir exercicis o aplicar plantilla';
-  // Reset tabs UI
-  ['hist','tpl','ex'].forEach(t=>{
-    const btn=document.getElementById('sf-tab-'+t);
-    const panel=document.getElementById('sf-panel-'+t);
-    if(btn) btn.classList.toggle('sf-tab-active',t==='hist');
-    if(panel) panel.style.display=t==='hist'?'block':'none';
-  });
+  if(countEl) countEl.textContent="Toca per afegir blocs d'entrenament";
   renderClientSelectList();
   if(preClientId){
     setTimeout(()=>{
