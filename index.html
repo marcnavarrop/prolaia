@@ -1555,8 +1555,13 @@ function initSessionBlocks(){
 
 function addSessionBlock(){
   if(!trainingSystems.length){toast('Primer crea un sistema a Exercicis → Sistemes');return;}
-  const modal=document.getElementById('backup-modal');
-  if(!modal) return;
+  let modal=document.getElementById('backup-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='backup-modal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+    document.body.appendChild(modal);
+  }
   modal.innerHTML='';modal.style.display='flex';
   const box=document.createElement('div');
   box.style.cssText='background:#F0EEE8;border-radius:14px;padding:20px;width:100%;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px';
@@ -1693,8 +1698,13 @@ function renderSessionBlocks(){
 }
 
 function openBlockExPicker(blockIdx){
-  // Reuse existing exercise picker but for block
-  const modal=document.getElementById('backup-modal');
+  let modal=document.getElementById('backup-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='backup-modal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+    document.body.appendChild(modal);
+  }
   modal.innerHTML='';
   modal.style.display='flex';
   const box=document.createElement('div');
