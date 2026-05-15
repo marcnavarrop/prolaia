@@ -455,6 +455,44 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     </div>
   </div>
 </div>
+<!-- SYSTEM DRAWER -->
+<div class="drawer" id="system-drawer" style="display:none">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title" id="system-drawer-title">Nou sistema</div>
+  <input type="hidden" id="sys-edit-id">
+  <div class="field"><label>Nom *</label><input id="sys-nom" placeholder="Ex: Tabata, HIIT, Circuit..."></div>
+  <div class="field"><label>Descripció (opcional)</label><input id="sys-desc" placeholder="Ex: 20&quot; treball / 10&quot; descans"></div>
+  <div class="field"><label>Color</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="sys-colors">
+      <div class="color-opt selected" data-color="#F5A623" style="width:28px;height:28px;border-radius:50%;background:#F5A623;cursor:pointer;border:3px solid #2C2C2A"></div>
+      <div class="color-opt" data-color="#185FA5" style="width:28px;height:28px;border-radius:50%;background:#185FA5;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#1D9E75" style="width:28px;height:28px;border-radius:50%;background:#1D9E75;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#E24B4A" style="width:28px;height:28px;border-radius:50%;background:#E24B4A;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#854F0B" style="width:28px;height:28px;border-radius:50%;background:#854F0B;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#534AB7" style="width:28px;height:28px;border-radius:50%;background:#534AB7;cursor:pointer;border:3px solid transparent"></div>
+      <div class="color-opt" data-color="#888780" style="width:28px;height:28px;border-radius:50%;background:#888780;cursor:pointer;border:3px solid transparent"></div>
+    </div>
+  </div>
+  <div class="drawer-actions">
+    <button class="btn-sec" onclick="closeDrawer()">Cancel·lar</button>
+    <button class="btn-main" onclick="saveSystem()">Desar</button>
+  </div>
+</div>
+
+<!-- WORKOUT VIEW MODAL -->
+<div id="workout-modal" style="display:none;position:fixed;inset:0;background:#1A1A18;z-index:9980;overflow-y:auto">
+  <div style="max-width:480px;margin:0 auto;padding:20px 16px 40px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div id="wv-title" style="font-size:18px;font-weight:600;color:#F0EEE8"></div>
+        <div id="wv-meta" style="font-size:12px;color:#888780;margin-top:2px"></div>
+      </div>
+      <button onclick="document.getElementById('workout-modal').style.display='none'" style="background:#3A3A38;border:none;color:#D3D1C7;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div id="wv-blocks"></div>
+  </div>
+</div>
+
 <!-- TIME PICKER MODAL -->
 <div id="time-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9990;align-items:center;justify-content:center;padding:20px">
   <div style="background:#F8F6F2;border-radius:16px;width:100%;max-width:320px;padding:0 0 20px;box-shadow:0 8px 32px rgba(0,0,0,0.18)">
@@ -586,8 +624,12 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     </div>
     <!-- EXERCICIS -->
     <div class="section" id="s-exercicis">
-      <!-- Search bar -->
-      <div class="flex-row" style="margin-bottom:10px">
+      <div style="display:flex;gap:8px;margin-bottom:12px;border-bottom:1.5px solid #D3D1C7">
+        <button id="ex-tab-exercises" onclick="setExMainTab('exercises')" style="padding:8px 14px;border:none;background:none;font-size:13px;font-weight:500;color:#185FA5;border-bottom:2px solid #185FA5;cursor:pointer;font-family:inherit;margin-bottom:-1.5px">Exercicis</button>
+        <button id="ex-tab-systems" onclick="setExMainTab('systems')" style="padding:8px 14px;border:none;background:none;font-size:13px;font-weight:400;color:#888780;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;margin-bottom:-1.5px">Sistemes</button>
+      </div>
+      <!-- Exercises panel -->
+      <div id="ex-panel-exercises">
         <input class="search" id="ex-search" placeholder="Cercar exercici..." oninput="filterExercises(this.value)">
         <button class="btn-sec btn-sm" onclick="openGroupDrawer()" title="Gestionar grups">⊞ Grups</button>
         <button class="btn-main btn-sm" onclick="openExerciseDrawer()">+ nou</button>
@@ -607,6 +649,15 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <div id="ex-subgroup-chips" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:10px;padding:8px 10px;background:#fff;border-radius:10px;border:0.5px solid #D3D1C7"></div>
       <!-- Exercise list -->
       <div id="exercise-list"></div>
+      </div><!-- end ex-panel-exercises -->
+      <!-- Systems panel -->
+      <div id="ex-panel-systems" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:12px;color:#888780">Defineix els sistemes d'entrenament que fas servir</div>
+          <button class="btn-main btn-sm" onclick="openSystemDrawer()">+ Sistema</button>
+        </div>
+        <div id="systems-list"></div>
+      </div>
     </div>
     <!-- FACTURES -->
     <div class="section" id="s-factures">
@@ -818,43 +869,22 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
     </div>
     <div class="field"><label>Notes de la sessió (opcional)</label><textarea id="sf-notes" placeholder="Objectius, observacions…" style="min-height:52px"></textarea></div>
 
-    <!-- INLINE EXERCISE PLANNING -->
-    <div id="sf-ex-closed" onclick="toggleSfExPanel()" style="background:#185FA5;border-radius:10px;padding:12px 14px;margin-bottom:4px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.12s;-webkit-tap-highlight-color:transparent">
+    <!-- BLOC-BASED EXERCISE PLANNING -->
+    <div style="background:#185FA5;border-radius:10px;padding:12px 14px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">💪</span>
         <div>
-          <div style="font-size:13px;font-weight:500;color:#fff">Planificar exercicis</div>
-          <div style="font-size:11px;color:#B5D4F4;margin-top:1px" id="sf-ex-count">Toca per afegir exercicis o aplicar plantilla</div>
+          <div style="font-size:13px;font-weight:500;color:#fff">Exercicis per blocs</div>
+          <div style="font-size:11px;color:#B5D4F4;margin-top:1px" id="sf-ex-count">Toca per afegir blocs d'entrenament</div>
         </div>
       </div>
-      <span id="sf-ex-arrow" style="font-size:16px;color:#B5D4F4">›</span>
+      <button onclick="addSessionBlock()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit">+ Bloc</button>
     </div>
-    <!-- Selected exercises (always visible when selected) -->
-    <div id="sf-ex-selected" style="margin-bottom:4px"></div>
-    <!-- Collapsible panel -->
-    <div id="sf-ex-panel" style="display:none;background:#F8F6F2;border:0.5px solid #D3D1C7;border-radius:10px;padding:10px;margin-bottom:4px">
-      <!-- Tabs -->
-      <div style="display:flex;gap:0;margin-bottom:10px;background:#E8E6E0;border-radius:8px;padding:2px">
-        <button class="sf-tab-btn sf-tab-active" id="sf-tab-hist" onclick="setSfTab('hist')">📋 Historial</button>
-        <button class="sf-tab-btn" id="sf-tab-tpl" onclick="setSfTab('tpl')">⭐ Plantilles</button>
-        <button class="sf-tab-btn" id="sf-tab-ex" onclick="setSfTab('ex')">💪 Exercicis</button>
-      </div>
-      <!-- Tab: Historial -->
-      <div id="sf-panel-hist">
-        <div id="sf-hist-list" style="max-height:220px;overflow-y:auto"></div>
-      </div>
-      <!-- Tab: Plantilles -->
-      <div id="sf-panel-tpl" style="display:none">
-        <div id="sf-tpl-row" style="display:flex;flex-direction:column;gap:6px"></div>
-      </div>
-      <!-- Tab: Exercicis -->
-      <div id="sf-panel-ex" style="display:none">
-        <input id="sf-ex-search" placeholder="Cercar exercici..." style="width:100%;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:7px;font-size:12px;font-family:inherit;margin-bottom:8px;background:#fff" oninput="filterSfEx(this.value)">
-        <div id="sf-ex-group-chips" class="chips" style="margin-bottom:8px"></div>
-        <div id="sf-ex-group-list" style="max-height:200px;overflow-y:auto;border:0.5px solid #D3D1C7;border-radius:8px;padding:4px;background:#fff"></div>
-      </div>
-    </div>
+    <!-- Blocks list -->
+    <div id="sf-blocks-container" style="margin-bottom:4px"></div>
 
+    <div class="drawer-section">Notes de la sessió</div>
+    <textarea id="sf-notes" placeholder="Objectius, observacions…" style="width:100%;min-height:52px;padding:8px 10px;font-size:13px;border:0.5px solid #D3D1C7;border-radius:8px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
     <div class="drawer-actions">
       <button class="btn-sec" onclick="closeDrawer()">Cancel·lar</button>
       <button class="btn-main" onclick="saveSession()">Afegir sessió</button>
@@ -899,6 +929,11 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <div class="field"><label>Dificultat</label>
         <select id="ef-diff"><option>Bàsic</option><option>Intermedi</option><option>Avançat</option></select>
       </div>
+      <div class="field"><label>Mesura per defecte</label>
+        <select id="ef-mesura"><option value="reps">Repeticions</option><option value="seconds">Segons</option></select>
+      </div>
+    </div>
+    <div class="field-row">
       <div class="field"><label>Músculs</label>
         <input id="ef-musculs" placeholder="quàdriceps, gluti…">
       </div>
@@ -1123,6 +1158,7 @@ const LS={
   TEMPLATES:'laiapro_templates',
   COUNTERS:'laiapro_counters',
   PRICES:'laiapro_prices',
+  SYSTEMS:'laiapro_systems',
 };
 
 // ── TIME PICKER ──
@@ -1432,6 +1468,296 @@ async function manualSync(){
   }
 }
 
+// ── TRAINING SYSTEMS ──
+function setExMainTab(tab){
+  ['exercises','systems'].forEach(t=>{
+    document.getElementById('ex-panel-'+t).style.display=t===tab?'block':'none';
+    const btn=document.getElementById('ex-tab-'+t);
+    if(btn){
+      btn.style.color=t===tab?'#185FA5':'#888780';
+      btn.style.fontWeight=t===tab?'500':'400';
+      btn.style.borderBottomColor=t===tab?'#185FA5':'transparent';
+    }
+  });
+  if(tab==='systems') renderSystems();
+}
+
+function renderSystems(){
+  const el=document.getElementById('systems-list');if(!el)return;
+  el.innerHTML='';
+  if(!trainingSystems.length){
+    el.innerHTML='<div style="text-align:center;padding:28px;font-size:12px;color:#888780">Cap sistema creat. Afegeix el primer!</div>';
+    return;
+  }
+  trainingSystems.forEach(sys=>{
+    const card=document.createElement('div');
+    card.style.cssText='display:flex;align-items:center;gap:12px;padding:11px 13px;background:#fff;border:0.5px solid #D3D1C7;border-radius:9px;margin-bottom:7px';
+    const dot=document.createElement('div');
+    dot.style.cssText='width:14px;height:14px;border-radius:50%;flex-shrink:0;background:'+sys.color;
+    const info=document.createElement('div');info.style.flex='1';
+    info.innerHTML='<div style="font-size:13px;font-weight:500;color:#2C2C2A">'+sys.nom+'</div>'+(sys.desc?'<div style="font-size:11px;color:#888780;margin-top:2px">'+sys.desc+'</div>':'');
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:6px';
+    const editBtn=document.createElement('button');editBtn.className='icon-btn';editBtn.textContent='✎';
+    editBtn.onclick=((s)=>()=>openSystemDrawer(s))(sys);
+    const delBtn=document.createElement('button');delBtn.className='icon-btn';delBtn.style.color='#E24B4A';delBtn.textContent='✕';
+    delBtn.onclick=((id)=>()=>deleteSystem(id))(sys.id);
+    btns.appendChild(editBtn);btns.appendChild(delBtn);
+    card.appendChild(dot);card.appendChild(info);card.appendChild(btns);
+    el.appendChild(card);
+  });
+}
+
+let sysSelectedColor='#F5A623';
+function openSystemDrawer(sys){
+  document.getElementById('system-drawer-title').textContent=sys?'Editar sistema':'Nou sistema';
+  document.getElementById('sys-edit-id').value=sys?sys.id:'';
+  document.getElementById('sys-nom').value=sys?sys.nom:'';
+  document.getElementById('sys-desc').value=sys?sys.desc||'':'';
+  sysSelectedColor=sys?sys.color:'#F5A623';
+  document.querySelectorAll('#sys-colors .color-opt').forEach(d=>{
+    d.style.border='3px solid '+(d.dataset.color===sysSelectedColor?'#2C2C2A':'transparent');
+    d.onclick=()=>{sysSelectedColor=d.dataset.color;document.querySelectorAll('#sys-colors .color-opt').forEach(x=>x.style.border='3px solid '+(x.dataset.color===sysSelectedColor?'#2C2C2A':'transparent'));};
+  });
+  openDrawer('system-drawer');
+}
+function saveSystem(){
+  const nom=document.getElementById('sys-nom').value.trim();
+  if(!nom){toast('El nom és obligatori');return;}
+  const editId=parseInt(document.getElementById('sys-edit-id').value)||null;
+  const desc=document.getElementById('sys-desc').value.trim();
+  if(editId){
+    const s=trainingSystems.find(s=>s.id===editId);
+    if(s){s.nom=nom;s.desc=desc;s.color=sysSelectedColor;}
+  } else {
+    trainingSystems.push({id:nextSystemId++,nom,desc,color:sysSelectedColor});
+  }
+  lsSave();closeDrawer();renderSystems();
+  toast('✓ Sistema desat');
+}
+function deleteSystem(id){
+  openConfirm('Eliminar sistema','Segur que vols eliminar aquest sistema?','Eliminar',()=>{
+    trainingSystems=trainingSystems.filter(s=>s.id!==id);
+    lsSave();renderSystems();toast('Sistema eliminat');
+  });
+}
+
+// ── SESSION BLOCKS ──
+let sessionBlocks=[]; // [{systemId, systemNom, systemColor, exercises:[{nom,sets,mesura}]}]
+
+function initSessionBlocks(){
+  sessionBlocks=[];
+  renderSessionBlocks();
+}
+
+function addSessionBlock(){
+  // Open system picker
+  if(!trainingSystems.length){toast('Primer crea un sistema a la pestaña Exercicis → Sistemes');return;}
+  const modal=document.getElementById('backup-modal');
+  if(!modal){return;}
+  modal.innerHTML='';
+  modal.style.display='flex';
+  const box=document.createElement('div');
+  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:20px;max-height:80vh;overflow-y:auto;width:100%';
+  const title=document.createElement('div');
+  title.style.cssText='font-size:15px;font-weight:500;color:#2C2C2A;margin-bottom:14px';
+  title.textContent='Selecciona el sistema del bloc';
+  box.appendChild(title);
+  trainingSystems.forEach(sys=>{
+    const btn=document.createElement('button');
+    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;padding:11px 13px;background:#fff;border:0.5px solid #D3D1C7;border-radius:9px;margin-bottom:7px;cursor:pointer;font-family:inherit;text-align:left';
+    const dot=document.createElement('div');
+    dot.style.cssText='width:12px;height:12px;border-radius:50%;background:'+sys.color+';flex-shrink:0';
+    const info=document.createElement('div');
+    info.innerHTML='<div style="font-size:13px;font-weight:500;color:#2C2C2A">'+sys.nom+'</div>'+(sys.desc?'<div style="font-size:11px;color:#888780">'+sys.desc+'</div>':'');
+    btn.appendChild(dot);btn.appendChild(info);
+    btn.onclick=((s)=>()=>{
+      sessionBlocks.push({systemId:s.id,systemNom:s.nom,systemColor:s.color,exercises:[]});
+      modal.style.display='none';
+      renderSessionBlocks();
+    })(sys);
+    box.appendChild(btn);
+  });
+  const cancel=document.createElement('button');
+  cancel.style.cssText='width:100%;padding:10px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px';
+  cancel.textContent='Cancel·lar';
+  cancel.onclick=()=>modal.style.display='none';
+  box.appendChild(cancel);
+  modal.appendChild(box);
+}
+
+function removeSessionBlock(idx){
+  sessionBlocks.splice(idx,1);
+  renderSessionBlocks();
+}
+
+function renderSessionBlocks(){
+  const el=document.getElementById('sf-blocks-container');if(!el)return;
+  el.innerHTML='';
+  sessionBlocks.forEach((block,bi)=>{
+    const wrap=document.createElement('div');
+    wrap.style.cssText='background:#fff;border:0.5px solid #D3D1C7;border-radius:10px;margin-bottom:8px;overflow:hidden';
+    // Block header
+    const hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:9px;padding:10px 12px;background:'+block.systemColor+'22;border-bottom:0.5px solid '+block.systemColor+'44';
+    const dot=document.createElement('div');
+    dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+block.systemColor+';flex-shrink:0';
+    const lbl=document.createElement('span');
+    lbl.style.cssText='font-size:12px;font-weight:600;color:#2C2C2A;flex:1;text-transform:uppercase;letter-spacing:0.3px';
+    lbl.textContent=block.systemNom;
+    const delBtn=document.createElement('button');
+    delBtn.style.cssText='background:none;border:none;color:#888780;cursor:pointer;font-size:14px;padding:0';
+    delBtn.textContent='✕';
+    delBtn.onclick=((idx)=>()=>removeSessionBlock(idx))(bi);
+    hdr.appendChild(dot);hdr.appendChild(lbl);hdr.appendChild(delBtn);
+    wrap.appendChild(hdr);
+    // Exercises in block
+    const exList=document.createElement('div');
+    exList.style.cssText='padding:6px 10px';
+    block.exercises.forEach((ex,ei)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:0.5px solid #F0EEE8';
+      const nameEl=document.createElement('span');
+      nameEl.style.cssText='font-size:12px;color:#2C2C2A;flex:1';
+      nameEl.textContent=ex.nom;
+      // Sets input
+      const setsInput=document.createElement('input');
+      setsInput.value=ex.sets||'';
+      setsInput.placeholder=ex.mesura==='seconds'?'30\'\' x3':'10 x3';
+      setsInput.style.cssText='width:60px;font-size:11px;text-align:center;border:0.5px solid #D3D1C7;border-radius:5px;padding:3px 5px;font-family:inherit';
+      setsInput.addEventListener('change',((b,e)=>function(){sessionBlocks[b].exercises[e].sets=this.value;})(bi,ei));
+      // Mesura badge
+      const mesuraBadge=document.createElement('span');
+      mesuraBadge.style.cssText='font-size:9px;color:#888780;background:#F0EEE8;padding:2px 5px;border-radius:4px';
+      mesuraBadge.textContent=ex.mesura==='seconds'?'seg':'rep';
+      const delEx=document.createElement('button');
+      delEx.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:13px;padding:0';
+      delEx.textContent='×';
+      delEx.onclick=((b,e)=>()=>{sessionBlocks[b].exercises.splice(e,1);renderSessionBlocks();})(bi,ei);
+      row.appendChild(nameEl);row.appendChild(mesuraBadge);row.appendChild(setsInput);row.appendChild(delEx);
+      exList.appendChild(row);
+    });
+    // Add exercise button
+    const addExBtn=document.createElement('button');
+    addExBtn.style.cssText='width:100%;padding:7px;margin-top:5px;background:#F8F6F2;border:0.5px dashed #D3D1C7;border-radius:7px;font-size:11px;color:#888780;cursor:pointer;font-family:inherit';
+    addExBtn.textContent='+ Afegir exercici';
+    addExBtn.onclick=((idx)=>()=>openBlockExPicker(idx))(bi);
+    exList.appendChild(addExBtn);
+    wrap.appendChild(exList);
+    el.appendChild(wrap);
+  });
+  // Update count
+  const countEl=document.getElementById('sf-ex-count');
+  const totalEx=sessionBlocks.reduce((a,b)=>a+b.exercises.length,0);
+  if(countEl) countEl.textContent=sessionBlocks.length?
+    sessionBlocks.length+' bloc'+(sessionBlocks.length!==1?'s':'')+' · '+totalEx+' exercici'+(totalEx!==1?'s':'')
+    :'Toca per afegir blocs d\'entrenament';
+}
+
+function openBlockExPicker(blockIdx){
+  // Reuse existing exercise picker but for block
+  const modal=document.getElementById('backup-modal');
+  modal.innerHTML='';
+  modal.style.display='flex';
+  const box=document.createElement('div');
+  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:16px;max-height:85vh;overflow-y:auto;width:100%;display:flex;flex-direction:column;gap:8px';
+  const title=document.createElement('div');
+  title.style.cssText='font-size:14px;font-weight:500;color:#2C2C2A;margin-bottom:4px';
+  title.textContent='Afegir exercici al bloc';
+  box.appendChild(title);
+  // Search
+  const search=document.createElement('input');
+  search.placeholder='Cercar exercici...';
+  search.style.cssText='width:100%;padding:8px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box';
+  // Results container
+  const results=document.createElement('div');
+  results.style.cssText='background:#fff;border-radius:8px;overflow:hidden;max-height:300px;overflow-y:auto';
+  function filterPicker(q){
+    results.innerHTML='';
+    const all=Object.entries(exerciseDB).flatMap(([g,exs])=>(exs||[]).map(e=>({...e,group:g,nom:e.nom||e})));
+    const filtered=q?all.filter(e=>e.nom.toLowerCase().includes(q.toLowerCase())):all;
+    filtered.slice(0,30).forEach(ex=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:0.5px solid #F0EEE8;cursor:pointer';
+      row.innerHTML='<div><div style="font-size:12px;font-weight:500;color:#2C2C2A">'+ex.nom+'</div>'
+        +'<div style="font-size:10px;color:#888780">'+ex.group+(ex.subgrup?' · '+ex.subgrup:'')+'</div></div>'
+        +'<span style="font-size:10px;background:#F0EEE8;padding:2px 7px;border-radius:4px;color:#5F5E5A">'+(ex.mesura==='seconds'?'Seg':'Rep')+'</span>';
+      row.onclick=((e)=>()=>{
+        sessionBlocks[blockIdx].exercises.push({nom:e.nom,sets:e.mesura==='seconds'?'30\'\'':'10',mesura:e.mesura||'reps'});
+        modal.style.display='none';
+        renderSessionBlocks();
+      })(ex);
+      results.appendChild(row);
+    });
+    if(!filtered.length) results.innerHTML='<div style="padding:12px;text-align:center;font-size:12px;color:#888780">Cap exercici trobat</div>';
+  }
+  search.oninput=()=>filterPicker(search.value);
+  filterPicker('');
+  const cancel=document.createElement('button');
+  cancel.style.cssText='width:100%;padding:10px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit';
+  cancel.textContent='Cancel·lar';
+  cancel.onclick=()=>modal.style.display='none';
+  box.appendChild(search);box.appendChild(results);box.appendChild(cancel);
+  modal.appendChild(box);
+  setTimeout(()=>search.focus(),200);
+}
+
+// ── WORKOUT VIEW ──
+function openWorkoutView(sessId){
+  const s=sessions.find(x=>x.id===sessId);if(!s)return;
+  const modal=document.getElementById('workout-modal');
+  document.getElementById('wv-title').textContent=sessDisplayName(s);
+  document.getElementById('wv-meta').textContent=fmtDate(s.date)+' · '+s.t+' · '+s.dur;
+  const blocksEl=document.getElementById('wv-blocks');
+  blocksEl.innerHTML='';
+  const blocks=s.blocks||[];
+  if(!blocks.length&&(!s.exercises||!s.exercises.length)){
+    blocksEl.innerHTML='<div style="text-align:center;padding:40px;color:#888780;font-size:14px">Aquesta sessió no t\'exercicis planificats</div>';
+  } else if(blocks.length){
+    blocks.forEach(block=>{
+      const blockDiv=document.createElement('div');
+      blockDiv.style.cssText='margin-bottom:20px;border-radius:12px;overflow:hidden;border:1px solid '+block.systemColor+'44';
+      const hdr=document.createElement('div');
+      hdr.style.cssText='padding:10px 14px;background:'+block.systemColor+';display:flex;align-items:center;gap:8px';
+      hdr.innerHTML='<span style="font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px">'+block.systemNom+'</span>';
+      if(block.systemDesc) hdr.innerHTML+='<span style="font-size:11px;color:rgba(255,255,255,0.8);margin-left:4px">— '+block.systemDesc+'</span>';
+      blockDiv.appendChild(hdr);
+      const exContainer=document.createElement('div');
+      exContainer.style.cssText='background:#242422;padding:6px 0';
+      block.exercises.forEach((ex,i)=>{
+        const row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid #333';
+        const num=document.createElement('span');
+        num.style.cssText='font-size:11px;color:#888780;min-width:18px;text-align:center';
+        num.textContent=i+1;
+        const name=document.createElement('span');
+        name.style.cssText='font-size:14px;color:#F0EEE8;flex:1';
+        name.textContent=ex.nom;
+        const sets=document.createElement('span');
+        sets.style.cssText='font-size:13px;font-weight:600;color:'+block.systemColor+';white-space:nowrap';
+        sets.textContent=ex.sets||(ex.mesura==='seconds'?'30\'\'':'10 x3');
+        row.appendChild(num);row.appendChild(name);row.appendChild(sets);
+        exContainer.appendChild(row);
+      });
+      blockDiv.appendChild(exContainer);
+      blocksEl.appendChild(blockDiv);
+    });
+  } else {
+    // Fallback: old exercise format without blocks
+    const oldDiv=document.createElement('div');
+    oldDiv.style.cssText='background:#242422;border-radius:12px;overflow:hidden';
+    s.exercises.forEach((ex,i)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid #333';
+      row.innerHTML='<span style="font-size:11px;color:#888780;min-width:18px;text-align:center">'+(i+1)+'</span>'
+        +'<span style="font-size:14px;color:#F0EEE8;flex:1">'+ex.name+'</span>'
+        +'<span style="font-size:13px;font-weight:600;color:#1D9E75">'+(ex.sets||'')+'</span>';
+      oldDiv.appendChild(row);
+    });
+    blocksEl.appendChild(oldDiv);
+  }
+  modal.style.display='block';
+}
+
 function lsSave(){
   try{
     localStorage.setItem(LS.CLIENTS,JSON.stringify(clients));
@@ -1441,6 +1767,7 @@ function lsSave(){
     localStorage.setItem(LS.TEMPLATES,JSON.stringify(templates));
     localStorage.setItem(LS.COUNTERS,JSON.stringify({nextClientId,nextSessId,nextInvId,nextInvNum,nextTplId}));
     localStorage.setItem(LS.PRICES,JSON.stringify(sessionPrices));
+    localStorage.setItem(LS.SYSTEMS,JSON.stringify({systems:trainingSystems,nextSystemId}));
   }catch(e){console.warn('localStorage error:',e);}
   scheduleSbSave();
 }
@@ -1460,6 +1787,8 @@ function lsLoad(){
     if(k){const cnt=JSON.parse(k);nextClientId=cnt.nextClientId;nextSessId=cnt.nextSessId;nextInvId=cnt.nextInvId;nextInvNum=cnt.nextInvNum;nextTplId=cnt.nextTplId||1;}
     const pr=localStorage.getItem(LS.PRICES);
     if(pr){const loaded=JSON.parse(pr);Object.assign(sessionPrices,loaded);}
+    const sy=localStorage.getItem(LS.SYSTEMS);
+    if(sy){const loaded=JSON.parse(sy);if(loaded.systems)trainingSystems=loaded.systems;if(loaded.nextSystemId)nextSystemId=loaded.nextSystemId;}
   }catch(e){console.warn('localStorage load error:',e);}
 }
 function exportData(){
@@ -1780,6 +2109,15 @@ function defaultExerciseDB(){return {
 }}
 
 // Working variables — populated by lsLoad()
+let trainingSystems=[
+  {id:1,nom:'Activació',color:'#F5A623',desc:'Escalfament i activació muscular'},
+  {id:2,nom:'Força',color:'#185FA5',desc:'Treball de força per blocs'},
+  {id:3,nom:'Circuit',color:'#1D9E75',desc:'Circuit d\'exercicis seguits'},
+  {id:4,nom:'HIIT',color:'#E24B4A',desc:'Alta intensitat per intervals'},
+  {id:5,nom:'Tabata',color:'#854F0B',desc:'20\" treball / 10\" descans'},
+  {id:6,nom:'Mobilitat',color:'#888780',desc:'Estiraments i mobilitat'},
+];
+let nextSystemId=7;
 let sessionPrices={
   vindi:{individual:20.25,pareja:26.65,grupo:28.00},
   bcn:{individual:25.00,pareja:30.00,grupo:32.00}
@@ -2081,6 +2419,15 @@ function renderSessions(){
       if(sess){sess.status=sess.status==='cancel'?'pend':'cancel';lsSave();renderSessions();updateHomeStats();}
     })(s.id));
     actDiv.appendChild(doneBtn);actDiv.appendChild(cancelBtn);
+    // Workout view button — only if session has blocks or exercises
+    if((s.blocks&&s.blocks.length)||(s.exercises&&s.exercises.length)){
+      const wvBtn=document.createElement('button');
+      wvBtn.style.cssText='width:30px;height:30px;border-radius:8px;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;background:#F0EEE8;flex-shrink:0';
+      wvBtn.title='Veure sessió';
+      wvBtn.textContent='💪';
+      wvBtn.addEventListener('click',(sid=>e=>{e.stopPropagation();openWorkoutView(sid);})(s.id));
+      actDiv.appendChild(wvBtn);
+    }
     row.appendChild(actDiv);
     row.addEventListener('click',()=>openSessionDetail(s.id));
     wrap.appendChild(row);container.appendChild(wrap);
@@ -2667,6 +3014,8 @@ function openSessionDrawer(preClientId){
   document.getElementById('sf-preu').value=getSessionPrice('vindi','individual').toFixed(2);
   // Reset exercise panel
   sfExSelected=[];sfExPanelOpen=false;sfExActiveGroup=null;sfActiveTab='hist';
+  sessionBlocks=[];
+  renderSessionBlocks();
   document.getElementById('sf-ex-panel').style.display='none';
   document.getElementById('sf-client-history').style.display='none';
   const arrow=document.getElementById('sf-ex-arrow');
@@ -2745,7 +3094,7 @@ function saveSession(){
     return;
   }
   const preu=parseFloat(document.getElementById('sf-preu').value)||0;
-  sessions.push({id:nextSessId++,clientIds:selectedIds,type:currentSessType,date:data,t:hora,dur:durVal,preu,status:'pend',notes:document.getElementById('sf-notes').value.trim(),exercises:sfExSelected.length?JSON.parse(JSON.stringify(sfExSelected)):[]});
+  sessions.push({id:nextSessId++,clientIds:selectedIds,type:currentSessType,date:data,t:hora,dur:durVal,preu,status:'pend',notes:document.getElementById('sf-notes').value.trim(),blocks:JSON.parse(JSON.stringify(sessionBlocks)),exercises:[]});
   closeDrawer();lsSave();
   if(selectedDate===data) renderSessions();
   renderCalendar();renderHomeToday();updateHomeStats();
@@ -3279,6 +3628,7 @@ function openExerciseDrawer(grupPresel, editObj){
     document.getElementById('ef-musculs').value=editObj.musculs||'';
     document.getElementById('ef-video').value=editObj.video||'';
     document.getElementById('ef-diff').value=editObj.diff||'Bàsic';
+    if(document.getElementById('ef-mesura')) document.getElementById('ef-mesura').value=editObj.mesura||'reps';
     updateSubgrupSelect();
     if(editObj.subgrup){const ss=document.getElementById('ef-subgrup');if(ss)ss.value=editObj.subgrup;}
     if(editObj.img){
@@ -3355,6 +3705,7 @@ function saveExercise(){
     musculs:document.getElementById('ef-musculs').value.trim(),
     diff:document.getElementById('ef-diff').value,
     video:document.getElementById('ef-video').value.trim(),
+    mesura:document.getElementById('ef-mesura')?.value||'reps',
     img:pendingImgBase64||''
   };
   if(!exerciseDB[grup]) exerciseDB[grup]=[];
