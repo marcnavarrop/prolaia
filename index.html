@@ -1575,9 +1575,9 @@ function renderWorkoutPlanner(modal){
   hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff;border-bottom:0.5px solid #D3D1C7;flex-shrink:0';
   hdr.innerHTML='<div style="font-size:16px;font-weight:600;color:#2C2C2A">Planificar entrenament</div>';
   const closeBtn=document.createElement('button');
-  closeBtn.style.cssText='background:#F0EEE8;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center';
-  closeBtn.textContent='✕';
-  closeBtn.onclick=()=>{modal.style.display='none';renderSessionBlocks();};
+  closeBtn.style.cssText='background:#185FA5;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:500;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap';
+  closeBtn.textContent='Desar entrenament ✓';
+  closeBtn.onclick=()=>{modal.style.display='none';renderSessionBlocks();toast('✓ Entrenament desat');};
   hdr.appendChild(closeBtn);
   modal.appendChild(hdr);
 
@@ -1625,7 +1625,7 @@ function renderWorkoutPlanner(modal){
     sessionBlocks.forEach(b=>b._expanded=false);
     sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',repsText:'',secsText:'',exercises:[],_expanded:true,_activeGroup:null,_activeSubgroup:null});
     renderWorkoutPlanner(modal);
-    setTimeout(()=>{const sc=modal.querySelector('[data-scroll]');if(sc)sc.scrollTo({top:sc.scrollHeight,behavior:'smooth'});},150);
+    setTimeout(()=>{const sc=modal.querySelector('[data-scroll]');if(sc)sc.scrollTo({top:0,behavior:'smooth'});},150);
   };
   content.appendChild(addBtn);
   content.dataset.scroll='1';
@@ -1764,9 +1764,10 @@ function renderPlannerBlock(container,block,bi,modal){
       row.appendChild(info);row.appendChild(icon);
       row.onclick=(e=>()=>{
         if(!sessionBlocks[bi].exercises.some(x=>x.nom===e.nom)){
-          sessionBlocks[bi].exercises.push({nom:e.nom,sets:'',mesura:e.mesura||'reps'});
+          // Show quick input for sets before adding
+          const setsVal=prompt((e.mesura==='seconds'?'Segons i s\u00e8ries':'Repeticions i s\u00e8ries')+' per "'+e.nom+'" (ex: 10x3 o 30\'\'x4):','');
+          sessionBlocks[bi].exercises.push({nom:e.nom,sets:setsVal||'',mesura:e.mesura||'reps'});
           filterExList();
-          // Update summary
           blockSummary.textContent=sessionBlocks[bi].exercises.length+' exercici'+(sessionBlocks[bi].exercises.length!==1?'s':'');
         }
       })(ex);
@@ -1833,7 +1834,8 @@ function openWorkoutView(sessId){
       const hdr=document.createElement('div');
       hdr.style.cssText='padding:10px 14px;background:'+block.systemColor+';display:flex;align-items:center;gap:8px';
       hdr.innerHTML='<span style="font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.5px">'+block.systemNom+'</span>';
-      if(block.systemDesc) hdr.innerHTML+='<span style="font-size:11px;color:rgba(255,255,255,0.8);margin-left:4px">— '+block.systemDesc+'</span>';
+      const mesInfo=[block.repsText?block.repsText+' rep':null,block.secsText?block.secsText+' seg':null].filter(Boolean).join(' · ');
+      if(mesInfo) hdr.innerHTML+='<span style="font-size:11px;color:rgba(255,255,255,0.85);margin-left:8px">'+mesInfo+'</span>';
       blockDiv.appendChild(hdr);
       const exContainer=document.createElement('div');
       exContainer.style.cssText='background:#242422;padding:6px 0';
@@ -2581,7 +2583,7 @@ function openSessionDetail(id){
 
   // Back button
   const back=document.createElement('button');
-  back.className='back-btn';back.textContent='\u2190 Tancar';
+  back.className='back-btn';back.textContent='← Tancar';
   back.onclick=()=>closeDrawer();
   el.appendChild(back);
 
@@ -2589,28 +2591,24 @@ function openSessionDetail(id){
   const hdr=document.createElement('div');
   hdr.className='sess-detail-header';
   hdr.innerHTML='<div class="sess-detail-title">'+sessDisplayName(s)+'</div>'
-    +'<div class="sess-detail-meta">'+fmtDate(s.date)+' \u00b7 '+s.t+' \u00b7 '+s.dur+' \u00b7 <span class="badge badge-'+s.type+'" style="font-size:11px">'+typeLabel[s.type]+'</span></div>';
+    +'<div class="sess-detail-meta">'+fmtDate(s.date)+' · '+s.t+' · '+s.dur+' · <span class="badge badge-'+s.type+'" style="font-size:11px">'+typeLabel[s.type]+'</span></div>';
 
-  // Client chips (DOM, no onclick inline)
+  // Client chips
   if(s.clientIds&&s.clientIds.length){
     const chipsWrap=document.createElement('div');
     chipsWrap.className='sess-detail-clients';
     s.clientIds.forEach(cid=>{
       const cl=getClient(cid);if(!cl)return;
-      const wrap=document.createElement('div');
-      wrap.style.cssText='display:flex;align-items:center;gap:5px';
-      const chip=document.createElement('div');
-      chip.className='sess-client-chip';
+      const wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:center;gap:5px';
+      const chip=document.createElement('div');chip.className='sess-client-chip';
       chip.innerHTML='<div class="sess-client-chip-av '+clientColor(cl)+'">'+clientInitials(cl)+'</div>'
         +'<span class="sess-client-chip-name">'+clientName(cl)+'</span>';
       chip.onclick=()=>{openClientDetail(cl.id);gotoTab('clients',2);closeDrawer();};
       wrap.appendChild(chip);
-      if(cl.tel&&cl.tel!=='\u2014'&&cl.tel!=='—'){
-        const waBtn=document.createElement('button');
-        waBtn.className='btn-wa btn-wa--sm';
+      if(cl.tel&&cl.tel!=='—'&&cl.tel!=='—'){
+        const waBtn=document.createElement('button');waBtn.className='btn-wa btn-wa--sm';
         waBtn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.544 5.877L0 24l6.292-1.521A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.882a9.844 9.844 0 01-5.032-1.378l-.36-.214-3.733.902.94-3.628-.235-.374A9.855 9.855 0 012.118 12C2.118 6.533 6.533 2.118 12 2.118S21.882 6.533 21.882 12 17.467 21.882 12 21.882z"/></svg>';
-        const tel=cl.tel;
-        waBtn.onclick=(e)=>{e.stopPropagation();openWhatsApp(tel);};
+        const tel=cl.tel;waBtn.onclick=(e)=>{e.stopPropagation();openWhatsApp(tel);};
         wrap.appendChild(waBtn);
       }
       chipsWrap.appendChild(wrap);
@@ -2619,85 +2617,77 @@ function openSessionDetail(id){
   }
   el.appendChild(hdr);
 
-  // Exercises section
-  const exHdr=document.createElement('div');
-  exHdr.style.cssText='display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px';
-  exHdr.innerHTML='<div class="slabel" style="margin:0">Exercicis'+(s.exercises&&s.exercises.length?' ('+s.exercises.length+')':'')+'</div>';
-  const exPlanBtn=document.createElement('button');
-  exPlanBtn.className='btn-plan btn-sm';
-  exPlanBtn.textContent=s.exercises&&s.exercises.length?'\u270e Editar':'+ Planificar';
-  exPlanBtn.onclick=()=>openSessExercisePlanner(id);
-  exHdr.appendChild(exPlanBtn);
-  el.appendChild(exHdr);
+  // ── Actions ──
+  const actions=document.createElement('div');
+  actions.style.cssText='display:flex;flex-direction:column;gap:7px;margin-top:8px';
 
-  if(s.exercises&&s.exercises.length){
-    const byGroup={};
-    s.exercises.forEach(ex=>{if(!byGroup[ex.group])byGroup[ex.group]=[];byGroup[ex.group].push(ex);});
-    Object.entries(byGroup).forEach(([grp,exs])=>{
-      const block=document.createElement('div');
-      block.className='sess-ex-block';
-      block.innerHTML='<div class="sess-ex-block-group">'+groupDot(grp)+'<span style="color:'+(GROUP_TEXT_COLORS[grp]||'#888780')+'">'+grp+'</span></div>'
-        +exs.map(ex=>'<div class="sess-ex-row"><span class="sess-ex-row-name">'+ex.name+'</span><span class="sess-ex-row-sets">'+(ex.sets||'')+'</span></div>').join('');
-      el.appendChild(block);
-    });
-  } else {
-    const noEx=document.createElement('div');
-    noEx.style.cssText='background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:14px;text-align:center;margin-bottom:4px';
-    noEx.innerHTML='<div style="font-size:11px;color:#B4B2A9;margin-bottom:8px">Encara no hi ha exercicis planificats</div>';
-    const planBtn=document.createElement('button');
-    planBtn.className='btn-plan btn-sm';planBtn.textContent='+ Planificar exercicis';
-    planBtn.onclick=()=>openSessExercisePlanner(id);
-    noEx.appendChild(planBtn);
-    el.appendChild(noEx);
-  }
+  // Edit session (opens workout planner)
+  const editBtn=document.createElement('button');
+  editBtn.className='btn-sec';editBtn.style.cssText='width:100%;text-align:left;padding:11px 14px;display:flex;align-items:center;gap:10px';
+  editBtn.innerHTML='<span style="font-size:18px">✎</span><span style="flex:1"><div style="font-size:13px;font-weight:500">Editar sessió</div><div style="font-size:11px;color:#888780">Modifica exercicis i blocs</div></span>›';
+  editBtn.onclick=()=>{
+    // Load existing blocks into sessionBlocks and open planner
+    sessionBlocks=s.blocks?JSON.parse(JSON.stringify(s.blocks)):[];
+    openWorkoutPlanner();
+    // On save, update session
+    const origClose=document.getElementById('workout-planner-modal')?.__origClose;
+    const planModal=document.getElementById('workout-planner-modal');
+    if(planModal){
+      const saveBtn=planModal.querySelector('button');
+      if(saveBtn){
+        const origOnclick=saveBtn.onclick;
+        saveBtn.onclick=()=>{
+          s.blocks=JSON.parse(JSON.stringify(sessionBlocks));
+          lsSave();renderSessions();
+          planModal.style.display='none';
+          renderSessionBlocks();
+          toast('✓ Sessió actualitzada');
+          openSessionDetail(id);
+        };
+      }
+    }
+  };
+  actions.appendChild(editBtn);
 
   // Notes
-  const notesLbl=document.createElement('div');
-  notesLbl.className='slabel';notesLbl.style.marginTop='13px';notesLbl.textContent='Notes de la sessi\u00f3';
-  el.appendChild(notesLbl);
-  const notesBox=document.createElement('div');
-  notesBox.className='notes-box';
+  const notesLbl=document.createElement('div');notesLbl.className='slabel';notesLbl.style.marginTop='4px';notesLbl.textContent='Notes de la sessió';
+  actions.appendChild(notesLbl);
   const ta=document.createElement('textarea');
-  ta.id='sess-notes-ta';ta.style.cssText='width:100%;border:none;background:transparent;font-family:inherit;font-size:13px;color:#2C2C2A;resize:none;outline:none;min-height:90px;line-height:1.6';
-  ta.placeholder='Afegeix notes, observacions, progressos\u2026';
-  ta.value=s.notes||'';
-  notesBox.appendChild(ta);
-  el.appendChild(notesBox);
+  ta.style.cssText='width:100%;border:0.5px solid #D3D1C7;background:#fff;font-family:inherit;font-size:13px;color:#2C2C2A;resize:none;outline:none;min-height:70px;line-height:1.6;border-radius:8px;padding:8px 10px;box-sizing:border-box';
+  ta.placeholder='Afegeix notes, observacions, progressos…';ta.value=s.notes||'';
+  actions.appendChild(ta);
+  const saveNotesBtn=document.createElement('button');
+  saveNotesBtn.className='btn-main';saveNotesBtn.style.cssText='width:100%';saveNotesBtn.textContent='Desar notes';
+  saveNotesBtn.onclick=()=>{s.notes=ta.value.trim();lsSave();renderSessions();toast('✓ Notes desades');};
+  actions.appendChild(saveNotesBtn);
 
-  // Action buttons row 1
-  const row1=document.createElement('div');
-  row1.style.cssText='display:flex;gap:7px;margin-bottom:10px';
-  const saveBtn=document.createElement('button');
-  saveBtn.className='btn-main';saveBtn.style.flex='1';saveBtn.textContent='Desar notes';
-  saveBtn.onclick=()=>saveSessionNotes(id);
-  const toggleBtn=document.createElement('button');
-  toggleBtn.className='btn-sec btn-sm';
-  toggleBtn.textContent=s.status==='done'?'Marcar pendent':'Marcar feta';
-  toggleBtn.onclick=()=>{toggleStatus(id);openSessionDetail(id);};
+  // Divider
+  const div=document.createElement('div');div.style.cssText='border-top:0.5px solid #D3D1C7;margin:4px 0';actions.appendChild(div);
+
+  // Session done
+  const doneBtn=document.createElement('button');
+  doneBtn.style.cssText='width:100%;padding:11px;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;background:'+(s.status==='done'?'#F0FFF8':'#1D9E75')+';color:'+(s.status==='done'?'#1D9E75':'#fff');
+  doneBtn.textContent=s.status==='done'?'✓ Sessió finalitzada (desfer)':'Marcar sessió finalitzada';
+  doneBtn.onclick=()=>{toggleStatus(id);openSessionDetail(id);};
+  actions.appendChild(doneBtn);
+
+  // Cancel session
   const cancelBtn=document.createElement('button');
-  cancelBtn.className='btn-sm';
-  cancelBtn.style.cssText='padding:5px 9px;background:'+(s.status==='cancel'?'#D3D1C7':'#FCEBEB')+';color:'+(s.status==='cancel'?'#444441':'#A32D2D')+';border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:500;white-space:nowrap';
-  cancelBtn.textContent=s.status==='cancel'?'Desfer cancel·lació':'Cancel·lar';
-  cancelBtn.onclick=()=>{
-    const sess=sessions.find(x=>x.id===id);
-    if(sess){sess.status=sess.status==='cancel'?'pend':'cancel';lsSave();openSessionDetail(id);renderSessions();}
-  };
-  row1.appendChild(saveBtn);row1.appendChild(toggleBtn);row1.appendChild(cancelBtn);
-  el.appendChild(row1);
+  cancelBtn.style.cssText='width:100%;padding:11px;border:none;border-radius:9px;font-family:inherit;font-size:13px;cursor:pointer;background:'+(s.status==='cancel'?'#D3D1C7':'#FCEBEB')+';color:'+(s.status==='cancel'?'#444441':'#A32D2D');
+  cancelBtn.textContent=s.status==='cancel'?'Desfer cancel·lació':'Anular sessió';
+  cancelBtn.onclick=()=>{const sess=sessions.find(x=>x.id===id);if(sess){sess.status=sess.status==='cancel'?'pend':'cancel';lsSave();openSessionDetail(id);renderSessions();}};
+  actions.appendChild(cancelBtn);
 
-  // Action buttons row 2
-  const row2=document.createElement('div');
-  row2.style.cssText='display:flex;gap:7px';
-  const reschedBtn=document.createElement('button');
-  reschedBtn.className='btn-sec';reschedBtn.style.flex='1';reschedBtn.textContent='\u21bb Reagendar';
-  const sDate=s.date,sTime=s.t,sName=sessDisplayName(s);
-  reschedBtn.onclick=()=>openRescheduleDrawer(sName,sDate,sTime);
-  const delBtn=document.createElement('button');
-  delBtn.className='btn-danger btn-sm';delBtn.textContent='Eliminar';
+  // Reschedule + Delete
+  const row2=document.createElement('div');row2.style.cssText='display:flex;gap:7px';
+  const reschedBtn=document.createElement('button');reschedBtn.className='btn-sec';reschedBtn.style.flex='1';reschedBtn.textContent='↻ Reagendar';
+  reschedBtn.onclick=()=>openRescheduleDrawer(sessDisplayName(s),s.date,s.t);
+  const delBtn=document.createElement('button');delBtn.className='btn-danger btn-sm';delBtn.textContent='Eliminar';
   delBtn.onclick=()=>{deleteSession(id);closeDrawer();};
   row2.appendChild(reschedBtn);row2.appendChild(delBtn);
-  el.appendChild(row2);
+  actions.appendChild(row2);
 
+  el.appendChild(actions);
   openDrawer('session-detail-drawer');
 }
 
