@@ -457,14 +457,14 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
 </div>
 
 <!-- WORKOUT VIEW MODAL -->
-<div id="workout-modal" style="display:none;position:fixed;inset:0;background:#1A1A18;z-index:9980;overflow-y:auto">
+<div id="workout-modal" style="display:none;position:fixed;inset:0;background:#F0EEE8;z-index:9980;overflow-y:auto">
   <div style="max-width:480px;margin:0 auto;padding:20px 16px 40px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
-        <div id="wv-title" style="font-size:18px;font-weight:600;color:#F0EEE8"></div>
-        <div id="wv-meta" style="font-size:12px;color:#888780;margin-top:2px"></div>
+        <div id="wv-title" style="font-size:18px;font-weight:600;color:#2C2C2A"></div>
+        <div id="wv-meta" style="font-size:12px;color:#5F5E5A;margin-top:2px"></div>
       </div>
-      <button onclick="document.getElementById('workout-modal').style.display='none'" style="background:#3A3A38;border:none;color:#D3D1C7;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px">✕</button>
+      <button onclick="document.getElementById('workout-modal').style.display='none'" style="background:#E8E6E0;border:none;color:#2C2C2A;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px">✕</button>
     </div>
     <div id="wv-blocks"></div>
   </div>
@@ -1624,6 +1624,47 @@ function renderWorkoutPlanner(modal){
     content.appendChild(tplSection);
   }
 
+  // Repeat session section — find past sessions of the same clients
+  const currentClientIds=(()=>{
+    try{return Array.from(document.querySelectorAll('.csel-cb:checked')).map(cb=>parseInt(cb.dataset.id)).filter(Boolean);}catch(e){return[];}
+  })();
+  if(currentClientIds.length){
+    const pastSessions=sessions.filter(s=>{
+      if(!s.clientIds||!s.clientIds.length) return false;
+      if(s.status==='cancel') return false;
+      if(!(s.blocks&&s.blocks.length)) return false;
+      return currentClientIds.some(id=>s.clientIds.includes(id));
+    }).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+    if(pastSessions.length){
+      const repSection=document.createElement('div');
+      repSection.style.cssText='background:#EEF4FF;border:0.5px solid #B5D4F4;border-radius:10px;padding:10px 13px;flex-shrink:0';
+      const repTitle=document.createElement('div');
+      repTitle.style.cssText='font-size:11px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px';
+      repTitle.textContent='↺ Repetir sessió anterior';
+      repSection.appendChild(repTitle);
+      pastSessions.forEach(s=>{
+        const btn=document.createElement('div');
+        btn.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border-radius:8px;margin-bottom:5px;cursor:pointer;border:0.5px solid #D3D1C7';
+        const totalEx=s.blocks.reduce((a,b)=>a+(b.exercises||[]).length,0);
+        const blockNames=s.blocks.map(b=>b.systemNom||'Bloc').join(' + ');
+        btn.innerHTML='<div>'
+          +'<div style="font-size:12px;font-weight:500;color:#2C2C2A">'+fmtDate(s.date)+'</div>'
+          +'<div style="font-size:11px;color:#888780;margin-top:1px">'+blockNames+' · '+totalEx+' ex.</div>'
+          +'</div>'
+          +'<span style="font-size:13px;color:#185FA5;font-weight:600">↺</span>';
+        btn.onclick=(sess=>()=>{
+          if(sessionBlocks.length&&!confirm('Repetir aquesta sessió? Els blocs actuals es substituiran.')) return;
+          sessionBlocks=JSON.parse(JSON.stringify(sess.blocks)).map(b=>({...b,_expanded:false}));
+          if(sessionBlocks.length) sessionBlocks[0]._expanded=true;
+          renderWorkoutPlanner(modal);
+          toast('✓ Sessió carregada');
+        })(s);
+        repSection.appendChild(btn);
+      });
+      content.appendChild(repSection);
+    }
+  }
+
   // Render each block
   sessionBlocks.forEach((block,bi)=>renderPlannerBlock(content,block,bi,modal));
 
@@ -1854,15 +1895,15 @@ function openWorkoutView(sessId){
       if(mesInfo) hdr.innerHTML+='<span style="font-size:11px;color:rgba(255,255,255,0.85);margin-left:8px">'+mesInfo+'</span>';
       blockDiv.appendChild(hdr);
       const exContainer=document.createElement('div');
-      exContainer.style.cssText='background:#242422;padding:6px 0';
+      exContainer.style.cssText='background:#fff;padding:6px 0;border:0.5px solid #EDECEA;border-top:none;';
       block.exercises.forEach((ex,i)=>{
         const row=document.createElement('div');
         row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid #333';
         const num=document.createElement('span');
-        num.style.cssText='font-size:11px;color:#888780;min-width:18px;text-align:center';
+        num.style.cssText='font-size:11px;color:#B4B2A9;min-width:18px;text-align:center';
         num.textContent=i+1;
         const name=document.createElement('span');
-        name.style.cssText='font-size:14px;color:#F0EEE8;flex:1';
+        name.style.cssText='font-size:14px;color:#2C2C2A;flex:1';
         name.textContent=ex.nom;
         const sets=document.createElement('span');
         sets.style.cssText='font-size:13px;font-weight:600;color:'+block.systemColor+';white-space:nowrap';
@@ -1876,7 +1917,7 @@ function openWorkoutView(sessId){
   } else {
     // Fallback: old exercise format without blocks
     const oldDiv=document.createElement('div');
-    oldDiv.style.cssText='background:#242422;border-radius:12px;overflow:hidden';
+    oldDiv.style.cssText='background:#fff;border-radius:12px;overflow:hidden;border:0.5px solid #D3D1C7';
     s.exercises.forEach((ex,i)=>{
       const row=document.createElement('div');
       row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid #333';
