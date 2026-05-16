@@ -1577,16 +1577,17 @@ function renderWorkoutPlanner(modal){
   hdr.innerHTML='<div style="font-size:16px;font-weight:600;color:#2C2C2A">Planificar entrenament</div>';
   const closeBtn=document.createElement('button');
   closeBtn.style.cssText='background:#185FA5;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:500;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap';
-  // Cancel button
   const cancelPlanBtn=document.createElement('button');
   cancelPlanBtn.style.cssText='background:#FCEBEB;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;color:#E24B4A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center';
-  cancelPlanBtn.textContent='✕';
-  cancelPlanBtn.title='Cancel·lar sense desar';
-  cancelPlanBtn.onclick=()=>{
-    window._plannerMode=null;
-    modal.style.display='none';
-  };
-  hdr.insertBefore(cancelPlanBtn,closeBtn);
+  cancelPlanBtn.textContent='\u2715';
+  cancelPlanBtn.title='Cancel\u00b7lar sense desar';
+  cancelPlanBtn.onclick=()=>{window._plannerMode=null;window._editingSessionId=null;modal.style.display='none';};
+  // Build right-side button group
+  const hdrRight=document.createElement('div');
+  hdrRight.style.cssText='display:flex;align-items:center;gap:8px';
+  hdrRight.appendChild(cancelPlanBtn);
+  hdrRight.appendChild(closeBtn);
+  hdr.appendChild(hdrRight);
   if(window._plannerMode==='template'){
     closeBtn.textContent='Aplicar a plantilla ✓';
     closeBtn.onclick=()=>{
@@ -1610,7 +1611,6 @@ function renderWorkoutPlanner(modal){
     closeBtn.textContent='Desar entrenament ✓';
     closeBtn.onclick=()=>{window._plannerMode=null;window._editingSessionId=null;modal.style.display='none';renderSessionBlocks();toast('✓ Entrenament desat');};
   }
-  hdr.appendChild(closeBtn);
   modal.appendChild(hdr);
 
   // Scrollable content
