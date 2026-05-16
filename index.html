@@ -1577,6 +1577,16 @@ function renderWorkoutPlanner(modal){
   hdr.innerHTML='<div style="font-size:16px;font-weight:600;color:#2C2C2A">Planificar entrenament</div>';
   const closeBtn=document.createElement('button');
   closeBtn.style.cssText='background:#185FA5;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:500;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap';
+  // Cancel button
+  const cancelPlanBtn=document.createElement('button');
+  cancelPlanBtn.style.cssText='background:#FCEBEB;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;color:#E24B4A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center';
+  cancelPlanBtn.textContent='✕';
+  cancelPlanBtn.title='Cancel·lar sense desar';
+  cancelPlanBtn.onclick=()=>{
+    window._plannerMode=null;
+    modal.style.display='none';
+  };
+  hdr.insertBefore(cancelPlanBtn,closeBtn);
   if(window._plannerMode==='template'){
     closeBtn.textContent='Aplicar a plantilla ✓';
     closeBtn.onclick=()=>{
@@ -1587,9 +1597,18 @@ function renderWorkoutPlanner(modal){
       openDrawer('template-drawer');
       toast('✓ Blocs aplicats');
     };
+  } else if(window._editingSessionId){
+    closeBtn.textContent='Desar canvis ✓';
+    closeBtn.onclick=()=>{
+      const sid=window._editingSessionId;
+      const sess=sessions.find(x=>x.id===sid);
+      if(sess){sess.blocks=JSON.parse(JSON.stringify(sessionBlocks));lsSave();renderSessions();scheduleSbSave();toast('✓ Sessió actualitzada');}
+      window._editingSessionId=null;window._plannerMode=null;
+      modal.style.display='none';renderSessionBlocks();
+    };
   } else {
     closeBtn.textContent='Desar entrenament ✓';
-    closeBtn.onclick=()=>{window._plannerMode=null;modal.style.display='none';renderSessionBlocks();toast('✓ Entrenament desat');};
+    closeBtn.onclick=()=>{window._plannerMode=null;window._editingSessionId=null;modal.style.display='none';renderSessionBlocks();toast('✓ Entrenament desat');};
   }
   hdr.appendChild(closeBtn);
   modal.appendChild(hdr);
@@ -1624,7 +1643,7 @@ function renderWorkoutPlanner(modal){
     content.appendChild(tplSection);
   }
 
-  // Repeat session section — find past sessions of the same clients
+  // Repeat session / history section
   const currentClientIds=(()=>{
     try{return Array.from(document.querySelectorAll('.csel-cb:checked')).map(cb=>parseInt(cb.dataset.id)).filter(Boolean);}catch(e){return[];}
   })();
@@ -1634,32 +1653,77 @@ function renderWorkoutPlanner(modal){
       if(s.status==='cancel') return false;
       if(!(s.blocks&&s.blocks.length)) return false;
       return currentClientIds.some(id=>s.clientIds.includes(id));
-    }).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+    }).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
     if(pastSessions.length){
       const repSection=document.createElement('div');
       repSection.style.cssText='background:#EEF4FF;border:0.5px solid #B5D4F4;border-radius:10px;padding:10px 13px;flex-shrink:0';
       const repTitle=document.createElement('div');
       repTitle.style.cssText='font-size:11px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px';
-      repTitle.textContent='↺ Repetir sessió anterior';
+      repTitle.textContent='↺ Històric de sessions';
       repSection.appendChild(repTitle);
       pastSessions.forEach(s=>{
-        const btn=document.createElement('div');
-        btn.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border-radius:8px;margin-bottom:5px;cursor:pointer;border:0.5px solid #D3D1C7';
         const totalEx=s.blocks.reduce((a,b)=>a+(b.exercises||[]).length,0);
         const blockNames=s.blocks.map(b=>b.systemNom||'Bloc').join(' + ');
-        btn.innerHTML='<div>'
-          +'<div style="font-size:12px;font-weight:500;color:#2C2C2A">'+fmtDate(s.date)+'</div>'
+        const card=document.createElement('div');
+        card.style.cssText='background:#fff;border-radius:9px;margin-bottom:6px;border:0.5px solid #D3D1C7;overflow:hidden';
+        // Header row
+        const cardHdr=document.createElement('div');
+        cardHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer';
+        cardHdr.innerHTML='<div>'
+          +'<div style="font-size:12px;font-weight:500;color:#2C2C2A">'+fmtDate(s.date)+' · '+s.t+'</div>'
           +'<div style="font-size:11px;color:#888780;margin-top:1px">'+blockNames+' · '+totalEx+' ex.</div>'
           +'</div>'
-          +'<span style="font-size:13px;color:#185FA5;font-weight:600">↺</span>';
-        btn.onclick=(sess=>()=>{
-          if(sessionBlocks.length&&!confirm('Repetir aquesta sessió? Els blocs actuals es substituiran.')) return;
-          sessionBlocks=JSON.parse(JSON.stringify(sess.blocks)).map(b=>({...b,_expanded:false}));
-          if(sessionBlocks.length) sessionBlocks[0]._expanded=true;
+          +'<div style="display:flex;gap:6px;align-items:center">';
+        // Preview toggle
+        const previewBtn=document.createElement('button');
+        previewBtn.style.cssText='font-size:11px;padding:3px 9px;border-radius:12px;border:0.5px solid #B5D4F4;background:#EEF4FF;color:#185FA5;cursor:pointer;font-family:inherit;white-space:nowrap';
+        previewBtn.textContent='Veure';
+        const previewArea=document.createElement('div');
+        previewArea.style.cssText='display:none;padding:0 12px 10px;border-top:0.5px solid #EDECEA';
+        previewBtn.onclick=(e)=>{
+          e.stopPropagation();
+          const open=previewArea.style.display!=='none';
+          previewArea.style.display=open?'none':'block';
+          previewBtn.textContent=open?'Veure':'Tancar';
+          if(!open){
+            previewArea.innerHTML='';
+            s.blocks.forEach(block=>{
+              const bHdr=document.createElement('div');
+              bHdr.style.cssText='display:flex;align-items:center;gap:6px;padding:7px 0 4px;border-bottom:0.5px solid #F0EEE8';
+              const dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(block.systemColor||'#185FA5')+';flex-shrink:0';
+              const lbl=document.createElement('span');lbl.style.cssText='font-size:11px;font-weight:600;color:'+(block.systemColor||'#185FA5')+';text-transform:uppercase';
+              lbl.textContent=block.systemNom||'Bloc';
+              const mes=block.repsText||block.secsText?document.createElement('span'):null;
+              if(mes){mes.style.cssText='font-size:10px;color:#888780;margin-left:4px';mes.textContent=[block.repsText,block.secsText].filter(Boolean).join(' / ');}
+              bHdr.appendChild(dot);bHdr.appendChild(lbl);if(mes)bHdr.appendChild(mes);
+              previewArea.appendChild(bHdr);
+              (block.exercises||[]).forEach((ex,i)=>{
+                const row=document.createElement('div');
+                row.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#2C2C2A';
+                row.innerHTML='<span style="color:#B4B2A9;min-width:16px;font-size:10px">'+(i+1)+'.</span>'
+                  +'<span style="flex:1">'+ex.nom+'</span>'
+                  +(ex.sets?'<span style="font-size:11px;color:#185FA5;font-weight:500">'+ex.sets+'</span>':'');
+                previewArea.appendChild(row);
+              });
+            });
+          }
+        };
+        // Copy button
+        const copyBtn=document.createElement('button');
+        copyBtn.style.cssText='font-size:11px;padding:3px 9px;border-radius:12px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap';
+        copyBtn.textContent='↺ Copiar';
+        copyBtn.onclick=(sess=>e=>{
+          e.stopPropagation();
+          if(sessionBlocks.length&&!confirm('Copiar aquesta sessió? Els blocs actuals es substituiran.')) return;
+          sessionBlocks=JSON.parse(JSON.stringify(sess.blocks)).map((b,i)=>({...b,_expanded:i===0}));
           renderWorkoutPlanner(modal);
-          toast('✓ Sessió carregada');
+          toast('✓ Sessió copiada');
         })(s);
-        repSection.appendChild(btn);
+        const btnWrap=cardHdr.querySelector('div:last-child');
+        btnWrap.appendChild(previewBtn);btnWrap.appendChild(copyBtn);
+        card.appendChild(cardHdr);
+        card.appendChild(previewArea);
+        repSection.appendChild(card);
       });
       content.appendChild(repSection);
     }
@@ -1709,11 +1773,17 @@ function renderPlannerBlock(container,block,bi,modal){
   blockSummary.textContent=block.exercises.length?block.exercises.length+' exercici'+(block.exercises.length!==1?'s':''):'Sense exercicis';
   titleWrap.appendChild(blockTitle);titleWrap.appendChild(blockSummary);
   const rightBtns=document.createElement('div');rightBtns.style.cssText='display:flex;align-items:center;gap:6px';
-  const toggleArrow=document.createElement('span');toggleArrow.style.cssText='font-size:14px;color:'+color+';transition:transform 0.2s';toggleArrow.textContent=isExpanded?'▲':'▼';
+  const toggleArrow=document.createElement('button');
+  toggleArrow.style.cssText='background:'+(isExpanded?block.systemColor||'#185FA5':'#E8E6E0')+';border:none;border-radius:50%;width:28px;height:28px;font-size:13px;color:#fff;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s';
+  toggleArrow.textContent=isExpanded?'\u2713':'✓';
+  toggleArrow.title=isExpanded?'Confirmar bloc':'Expandir bloc';
   const delBtn=document.createElement('button');delBtn.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1';delBtn.textContent='✕';
   delBtn.onclick=(e)=>{e.stopPropagation();sessionBlocks.splice(bi,1);renderWorkoutPlanner(modal);};
   rightBtns.appendChild(toggleArrow);rightBtns.appendChild(delBtn);
   blockHdr.appendChild(dot);blockHdr.appendChild(titleWrap);blockHdr.appendChild(rightBtns);
+  // Toggle on checkmark click (not whole header)
+  toggleArrow.onclick=(e)=>{e.stopPropagation();block._expanded=!block._expanded;renderWorkoutPlanner(modal);};
+  // Header click also toggles
   blockHdr.onclick=()=>{block._expanded=!block._expanded;renderWorkoutPlanner(modal);};
   wrap.appendChild(blockHdr);
 
@@ -2682,28 +2752,12 @@ function openSessionDetail(id){
   const editBtn=document.createElement('button');
   editBtn.className='btn-sec';editBtn.style.cssText='width:100%;text-align:left;padding:11px 14px;display:flex;align-items:center;gap:10px';
   editBtn.innerHTML='<span style="font-size:18px">✎</span><span style="flex:1"><div style="font-size:13px;font-weight:500">Editar sessió</div><div style="font-size:11px;color:#888780">Modifica exercicis i blocs</div></span>›';
-  editBtn.onclick=()=>{
-    // Load existing blocks into sessionBlocks and open planner
-    sessionBlocks=s.blocks?JSON.parse(JSON.stringify(s.blocks)):[];
+  editBtn.onclick=(sid=>()=>{
+    window._editingSessionId=sid;
+    const sess=sessions.find(x=>x.id===sid);
+    sessionBlocks=sess&&sess.blocks?JSON.parse(JSON.stringify(sess.blocks)):[];
     openWorkoutPlanner();
-    // On save, update session
-    const origClose=document.getElementById('workout-planner-modal')?.__origClose;
-    const planModal=document.getElementById('workout-planner-modal');
-    if(planModal){
-      const saveBtn=planModal.querySelector('button');
-      if(saveBtn){
-        const origOnclick=saveBtn.onclick;
-        saveBtn.onclick=()=>{
-          s.blocks=JSON.parse(JSON.stringify(sessionBlocks));
-          lsSave();renderSessions();
-          planModal.style.display='none';
-          renderSessionBlocks();
-          toast('✓ Sessió actualitzada');
-          openSessionDetail(id);
-        };
-      }
-    }
-  };
+  })(id);
   actions.appendChild(editBtn);
 
   // Notes
