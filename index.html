@@ -1351,6 +1351,8 @@ async function sbSave(){
       .then(r=>r===null?sbFetch('app_data','POST',{key:'counters',value:{nextClientId,nextSessId,nextInvId,nextInvNum,nextTplId}}):r),
     sbFetch('app_data?key=eq.prices','PATCH',{value:sessionPrices,updated_at:new Date().toISOString()})
       .then(r=>r===null?sbFetch('app_data','POST',{key:'prices',value:sessionPrices}):r),
+    sbFetch('app_data?key=eq.systems','PATCH',{value:{systems:trainingSystems,nextSystemId},updated_at:new Date().toISOString()})
+      .then(r=>r===null?sbFetch('app_data','POST',{key:'systems',value:{systems:trainingSystems,nextSystemId}}):r),
   ];
   await Promise.all(saves);
 }
@@ -1397,6 +1399,12 @@ async function sbLoad(){
       nextTplId=cnt.nextTplId||nextTplId;
     }
     if(prices&&prices.length) Object.assign(sessionPrices,prices[0].value);
+    const sysData=await sbFetch('app_data?key=eq.systems');
+    if(sysData&&sysData.length&&sysData[0].value){
+      const sv=sysData[0].value;
+      if(sv.systems) trainingSystems=sv.systems;
+      if(sv.nextSystemId) nextSystemId=sv.nextSystemId;
+    }
     return true;
   }catch(e){
     console.warn('sbLoad error:',e);
@@ -5147,7 +5155,7 @@ function emptyState(icon,title,msg,btnLabel,btnAction){
 function refreshAll(){
   updateHomeStats();renderHomeTodayFinal();
   renderCalendar();renderClients();renderTemplates();
-  renderExercises();updateInvoiceClientSelect();renderInvoices();
+  renderExercises();if(document.getElementById('systems-list'))renderSystems();updateInvoiceClientSelect();renderInvoices();
 }
 
 // ══════════════════════════════════════
@@ -5452,6 +5460,48 @@ function togglePasswordVisible(){
   const btn=document.getElementById('pw-toggle');
   inp.type=inp.type==='password'?'text':'password';
   btn.textContent=inp.type==='password'?'👁':'🙈';
+}
+
+function showChangePasswordDrawer(){
+  let modal=document.getElementById('backup-modal');
+  if(!modal){modal=document.createElement('div');modal.id='backup-modal';modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';document.body.appendChild(modal);}
+  modal.innerHTML='';
+  const box=document.createElement('div');
+  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:20px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px';
+  box.innerHTML='<div style="font-size:15px;font-weight:500;color:#2C2C2A">🔒 Canviar contrasenya</div>';
+  [['pw-new','Nova contrasenya'],['pw-confirm','Confirma la nova contrasenya']].forEach(([id,lbl])=>{
+    const f=document.createElement('div');
+    f.innerHTML='<label style="font-size:11px;color:#888780;display:block;margin-bottom:4px">'+lbl+'</label>';
+    const inp=document.createElement('input');inp.type='password';inp.id=id;
+    inp.style.cssText='width:100%;padding:9px 12px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none';
+    f.appendChild(inp);box.appendChild(f);
+  });
+  const errEl=document.createElement('div');errEl.id='pw-change-error';errEl.style.cssText='font-size:12px;color:#E24B4A;min-height:14px';box.appendChild(errEl);
+  const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px';
+  const saveBtn=document.createElement('button');
+  saveBtn.style.cssText='flex:1;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit';
+  saveBtn.textContent='Desar';
+  saveBtn.onclick=async()=>{
+    const nw=document.getElementById('pw-new').value;
+    const conf=document.getElementById('pw-confirm').value;
+    const err=document.getElementById('pw-change-error');
+    if(nw.length<6){err.textContent='Mínim 6 caràcters';return;}
+    if(nw!==conf){err.textContent='Les contrasenyes no coincideixen';return;}
+    if(!authToken){err.textContent='Tanca sessió i torna a entrar';return;}
+    saveBtn.textContent='Guardant...';saveBtn.disabled=true;
+    try{
+      const res=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+authToken,'Content-Type':'application/json'},body:JSON.stringify({password:nw})});
+      const data=await res.json();
+      if(data.error){err.textContent=data.error;saveBtn.textContent='Desar';saveBtn.disabled=false;return;}
+      modal.style.display='none';toast('✓ Contrasenya canviada');
+    }catch(e){err.textContent='Error de connexió';saveBtn.textContent='Desar';saveBtn.disabled=false;}
+  };
+  const cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='padding:10px 16px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit';
+  cancelBtn.textContent='Cancel·lar';cancelBtn.onclick=()=>modal.style.display='none';
+  btns.appendChild(cancelBtn);btns.appendChild(saveBtn);box.appendChild(btns);
+  modal.appendChild(box);modal.style.display='flex';
+  setTimeout(()=>document.getElementById('pw-new')?.focus(),200);
 }
 
 async function doLogout(){
