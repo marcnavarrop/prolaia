@@ -1558,7 +1558,7 @@ function openWorkoutPlanner(){
   if(!modal){
     modal=document.createElement('div');
     modal.id='workout-planner-modal';
-    modal.style.cssText='position:fixed;inset:0;background:#F0EEE8;z-index:9990;display:flex;flex-direction:column;overflow:hidden';
+    modal.style.cssText='position:fixed;inset:0;background:#F0EEE8;z-index:9990;display:flex;flex-direction:column';
     document.body.appendChild(modal);
   }
   renderWorkoutPlanner(modal);
@@ -1583,7 +1583,35 @@ function renderWorkoutPlanner(modal){
 
   // Scrollable content
   const content=document.createElement('div');
-  content.style.cssText='flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px';
+  content.style.cssText='flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;padding-bottom:40px;display:flex;flex-direction:column;gap:12px';
+
+  // Templates section (if any exist)
+  if(templates&&templates.length){
+    const tplSection=document.createElement('div');
+    tplSection.style.cssText='background:#FFF9ED;border:0.5px solid #F5C842;border-radius:10px;padding:10px 13px';
+    const tplTitle=document.createElement('div');
+    tplTitle.style.cssText='font-size:11px;font-weight:600;color:#7A5F00;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px';
+    tplTitle.textContent='★ Aplicar plantilla';
+    tplSection.appendChild(tplTitle);
+    const tplRow=document.createElement('div');
+    tplRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+    templates.forEach(tpl=>{
+      const btn=document.createElement('button');
+      btn.style.cssText='padding:5px 12px;border-radius:16px;border:1px solid #F5C842;background:#fff;color:#7A5F00;font-size:12px;cursor:pointer;font-family:inherit';
+      btn.textContent=tpl.nom||tpl.name||'Plantilla';
+      btn.onclick=(t=>()=>{
+        if(!confirm('Aplicar la plantilla "'+(t.nom||t.name)+'"? Els blocs actuals es substituiran.')) return;
+        // Load template exercises as a single block
+        const exs=(t.exercises||[]).map(e=>({nom:e.nom||e.name||e,sets:e.sets||'',mesura:e.mesura||'reps'}));
+        sessionBlocks=[{systemId:null,systemNom:t.nom||t.name,systemColor:'#F5A623',systemDesc:'Des de plantilla',mesura:'reps',repsText:'',secsText:'',exercises:exs,_activeGroup:null,_activeSubgroup:null}];
+        renderWorkoutPlanner(modal);
+        toast('✓ Plantilla aplicada');
+      })(tpl);
+      tplRow.appendChild(btn);
+    });
+    tplSection.appendChild(tplRow);
+    content.appendChild(tplSection);
+  }
 
   // Render each block
   sessionBlocks.forEach((block,bi)=>renderPlannerBlock(content,block,bi,modal));
