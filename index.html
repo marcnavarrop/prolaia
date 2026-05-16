@@ -1032,19 +1032,19 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
   <div class="drawer" id="template-drawer" style="display:none">
     <div class="drawer-handle"></div>
     <div class="drawer-title" id="tpl-drawer-title">Nova plantilla</div>
-    <div class="field"><label>Nom de la plantilla *</label><input id="tpl-nom" placeholder="Ex: Força full body, Activació + tronc inferior…"></div>
-    <div class="field"><label>Descripció (opcional)</label><input id="tpl-desc" placeholder="Per a qui és, nivell, objectiu…"></div>
-
-    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;margin-top:4px">
-      <div class="slabel" style="margin:0">Exercicis seleccionats</div>
-      <span style="font-size:11px;color:#888780" id="tpl-count">0 exercicis</span>
+    <div class="field"><label>Nom de la plantilla *</label><input id="tpl-nom" placeholder="Ex: Força full body, Circuit HIIT…"></div>
+    <div class="field"><label>Descripció (opcional)</label><input id="tpl-desc" placeholder="Notes o context de la plantilla"></div>
+    <div onclick="openTemplatePlanner()" style="background:#185FA5;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-tap-highlight-color:transparent">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">📋</span>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:#fff">Planificar exercicis</div>
+          <div style="font-size:11px;color:#B5D4F4;margin-top:1px" id="tpl-ex-count">Toca per afegir blocs</div>
+        </div>
+      </div>
+      <span style="font-size:20px;color:#B5D4F4;font-weight:300">+</span>
     </div>
-    <div id="tpl-selected-list" style="margin-bottom:13px"></div>
-
-    <div class="slabel">Afegir exercicis per grup</div>
-    <div class="chips" id="tpl-group-chips" style="margin-bottom:10px"></div>
-    <div id="tpl-group-exercises"></div>
-
+    <div id="tpl-blocks-preview" style="margin-bottom:8px"></div>
     <div class="drawer-actions">
       <button class="btn-sec" onclick="closeDrawer()">Cancel·lar</button>
       <button class="btn-main" onclick="saveTemplate()">Desar plantilla</button>
@@ -1588,22 +1588,20 @@ function renderWorkoutPlanner(modal){
   // Templates section (if any exist)
   if(templates&&templates.length){
     const tplSection=document.createElement('div');
-    tplSection.style.cssText='background:#FFF9ED;border:0.5px solid #F5C842;border-radius:10px;padding:10px 13px';
+    tplSection.style.cssText='background:#FFF9ED;border:0.5px solid #F5C842;border-radius:10px;padding:10px 13px;flex-shrink:0';
     const tplTitle=document.createElement('div');
     tplTitle.style.cssText='font-size:11px;font-weight:600;color:#7A5F00;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px';
     tplTitle.textContent='★ Aplicar plantilla';
     tplSection.appendChild(tplTitle);
-    const tplRow=document.createElement('div');
-    tplRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+    const tplRow=document.createElement('div');tplRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
     templates.forEach(tpl=>{
       const btn=document.createElement('button');
       btn.style.cssText='padding:5px 12px;border-radius:16px;border:1px solid #F5C842;background:#fff;color:#7A5F00;font-size:12px;cursor:pointer;font-family:inherit';
-      btn.textContent=tpl.nom||tpl.name||'Plantilla';
+      btn.textContent=tpl.nom;
       btn.onclick=(t=>()=>{
-        if(!confirm('Aplicar la plantilla "'+(t.nom||t.name)+'"? Els blocs actuals es substituiran.')) return;
-        // Load template exercises as a single block
-        const exs=(t.exercises||[]).map(e=>({nom:e.nom||e.name||e,sets:e.sets||'',mesura:e.mesura||'reps'}));
-        sessionBlocks=[{systemId:null,systemNom:t.nom||t.name,systemColor:'#F5A623',systemDesc:'Des de plantilla',mesura:'reps',repsText:'',secsText:'',exercises:exs,_activeGroup:null,_activeSubgroup:null}];
+        if(sessionBlocks.length&&!confirm('Aplicar la plantilla "'+t.nom+'"? Els blocs actuals es substituiran.')) return;
+        sessionBlocks=(t.blocks||[]).map(b=>({...JSON.parse(JSON.stringify(b)),_expanded:false}));
+        if(sessionBlocks.length) sessionBlocks[sessionBlocks.length-1]._expanded=true;
         renderWorkoutPlanner(modal);
         toast('✓ Plantilla aplicada');
       })(tpl);
@@ -4047,37 +4045,94 @@ let tplSelected=[];
 let tplActiveGroup=null;
 let editingTplId=null;
 
+let tplBlocks=[];
+
 function openTemplateDrawer(editId){
   editingTplId=editId||null;
+  tplBlocks=[];
   if(editId){
     const tpl=templates.find(t=>t.id===editId);
     if(!tpl)return;
     document.getElementById('tpl-drawer-title').textContent='Editar plantilla';
     document.getElementById('tpl-nom').value=tpl.nom;
     document.getElementById('tpl-desc').value=tpl.desc||'';
-    tplSelected=JSON.parse(JSON.stringify(tpl.exercises));
+    tplBlocks=tpl.blocks?JSON.parse(JSON.stringify(tpl.blocks)):[];
   } else {
     document.getElementById('tpl-drawer-title').textContent='Nova plantilla';
     document.getElementById('tpl-nom').value='';
     document.getElementById('tpl-desc').value='';
-    tplSelected=[];
+    tplBlocks=[];
   }
-  const groups=Object.keys(exerciseDB);
-  tplActiveGroup=groups[0]||null;
-  renderTplGroupChips();renderTplSelected();renderTplGroupExercises();
+  renderTplBlocksPreview();
   openDrawer('template-drawer');
 }
+
+function openTemplatePlanner(){
+  sessionBlocks=JSON.parse(JSON.stringify(tplBlocks));
+  let modal=document.getElementById('workout-planner-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='workout-planner-modal';
+    modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:#F0EEE8;z-index:9990;display:flex;flex-direction:column;height:100%;max-height:100%';
+    document.body.appendChild(modal);
+  }
+  renderWorkoutPlanner(modal);
+  modal.style.display='flex';
+  // Override save button
+  setTimeout(()=>{
+    const hdr=modal.querySelector('button');
+    if(hdr){
+      hdr.textContent='Aplicar a plantilla \u2713';
+      hdr.onclick=()=>{
+        tplBlocks=JSON.parse(JSON.stringify(sessionBlocks));
+        modal.style.display='none';
+        renderTplBlocksPreview();
+        openDrawer('template-drawer');
+      };
+    }
+  },50);
+}
+
+function renderTplBlocksPreview(){
+  const el=document.getElementById('tpl-blocks-preview');if(!el)return;
+  const countEl=document.getElementById('tpl-ex-count');
+  const total=tplBlocks.reduce((a,b)=>a+b.exercises.length,0);
+  if(countEl) countEl.textContent=tplBlocks.length
+    ?tplBlocks.length+' bloc'+(tplBlocks.length!==1?'s':'')+' \u00b7 '+total+' exercici'+(total!==1?'s':'')
+    :'Toca per afegir blocs';
+  el.innerHTML='';
+  tplBlocks.forEach((block,bi)=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:9px;border:0.5px solid #D3D1C7;padding:9px 12px;margin-bottom:5px';
+    const color=block.systemColor||'#185FA5';
+    const hdr2=document.createElement('div');hdr2.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:3px';
+    const dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+color;
+    const lbl=document.createElement('span');lbl.style.cssText='font-size:12px;font-weight:600;color:'+color;
+    lbl.textContent=block.systemNom||('Bloc '+(bi+1));
+    const cnt=document.createElement('span');cnt.style.cssText='font-size:11px;color:#888780;margin-left:auto';
+    cnt.textContent=block.exercises.length+' ex.';
+    hdr2.appendChild(dot);hdr2.appendChild(lbl);hdr2.appendChild(cnt);
+    card.appendChild(hdr2);
+    if(block.exercises.length){
+      const exList=document.createElement('div');exList.style.cssText='font-size:11px;color:#5F5E5A;line-height:1.7';
+      exList.textContent=block.exercises.map(e=>e.nom+(e.sets?' ('+e.sets+')':'')).join(', ');
+      card.appendChild(exList);
+    }
+    el.appendChild(card);
+  });
+}
+
 function saveTemplate(){
   const nom=document.getElementById('tpl-nom').value.trim();
-  if(!nom){toast('⚠ Cal posar un nom a la plantilla');return;}
-  if(tplSelected.length===0){toast('⚠ Afegeix almenys un exercici');return;}
+  if(!nom){toast('\u26a0 Cal posar un nom');return;}
+  if(!tplBlocks.length){toast('\u26a0 Afegeix almenys un bloc');return;}
   if(editingTplId){
     const idx=templates.findIndex(t=>t.id===editingTplId);
-    if(idx>-1) templates[idx]={...templates[idx],nom,desc:document.getElementById('tpl-desc').value.trim(),exercises:JSON.parse(JSON.stringify(tplSelected))};
-    toast('✓ Plantilla actualitzada');
+    if(idx>-1) templates[idx]={...templates[idx],nom,desc:document.getElementById('tpl-desc').value.trim(),blocks:JSON.parse(JSON.stringify(tplBlocks))};
+    toast('\u2713 Plantilla actualitzada');
   } else {
-    templates.push({id:nextTplId++,nom,desc:document.getElementById('tpl-desc').value.trim(),exercises:JSON.parse(JSON.stringify(tplSelected)),createdAt:isoDate(TODAY)});
-    toast('✓ Plantilla "'+nom+'" desada');
+    templates.push({id:nextTplId++,nom,desc:document.getElementById('tpl-desc').value.trim(),blocks:JSON.parse(JSON.stringify(tplBlocks)),createdAt:isoDate(TODAY)});
+    toast('\u2713 Plantilla "'+nom+'" desada');
   }
   lsSave();closeDrawer();renderTemplates();
 }
@@ -4099,11 +4154,11 @@ function renderTemplates(){
     return;
   }
   el.innerHTML=templates.map(tpl=>{
-    const byGroup={};
-    tpl.exercises.forEach(ex=>{if(!byGroup[ex.group])byGroup[ex.group]=0;byGroup[ex.group]++;});
-    const pills=Object.entries(byGroup).map(([g,n])=>{
-      const bg=GROUP_BG_COLORS[g]||'#F1EFE8';const col=GROUP_TEXT_COLORS[g]||'#444441';
-      return `<span class="tpl-pill" style="background:${bg};color:${col}">${g} (${n})</span>`;
+    const blocks=tpl.blocks||[];
+    const total=blocks.reduce((a,b)=>a+b.exercises.length,0);
+    const pills=blocks.map(b=>{
+      const col=b.systemColor||'#185FA5';
+      return `<span style="background:${col}22;color:${col};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">${b.systemNom||'Bloc'} (${b.exercises.length})</span>`;
     }).join('');
     return `<div class="tpl-card">
       <div class="tpl-card-top">
