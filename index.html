@@ -1567,6 +1567,26 @@ function openWorkoutPlanner(clientIds){
   modal.style.display='flex';
 }
 
+function makeCollapsible(title,color,borderColor,buildFn){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='border:0.5px solid '+borderColor+';border-radius:10px;overflow:hidden;flex-shrink:0';
+  const secHdr=document.createElement('div');
+  secHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:'+color+';cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none';
+  const lbl=document.createElement('span');lbl.style.cssText='font-size:11px;font-weight:600;color:#2C2C2A;text-transform:uppercase;letter-spacing:0.4px';lbl.textContent=title;
+  const arrow=document.createElement('span');arrow.style.cssText='font-size:12px;color:#888780;transition:transform 0.2s';arrow.textContent='▾';
+  secHdr.appendChild(lbl);secHdr.appendChild(arrow);
+  const body=document.createElement('div');
+  body.style.cssText='display:none;padding:10px 13px;background:#fff';
+  secHdr.onclick=()=>{
+    const open=body.style.display!=='none';
+    body.style.display=open?'none':'block';
+    arrow.style.transform=open?'rotate(0deg)':'rotate(-180deg)';
+  };
+  buildFn(body);
+  wrap.appendChild(secHdr);wrap.appendChild(body);
+  return wrap;
+}
+
 function renderWorkoutPlanner(modal){
   if(!modal) modal=document.getElementById('workout-planner-modal');
   if(!modal) return;
@@ -1617,27 +1637,6 @@ function renderWorkoutPlanner(modal){
   // Scrollable content
   const content=document.createElement('div');
   content.style.cssText='flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px;padding-bottom:80px;display:flex;flex-direction:column;gap:12px;min-height:0';
-
-  // ── Collapsible top sections ──
-  function makeCollapsible(title,color,borderColor,buildFn){
-    const wrap=document.createElement('div');
-    wrap.style.cssText='border:0.5px solid '+borderColor+';border-radius:10px;overflow:hidden;flex-shrink:0';
-    const hdr=document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:'+color+';cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none';
-    const lbl=document.createElement('span');lbl.style.cssText='font-size:11px;font-weight:600;color:#2C2C2A;text-transform:uppercase;letter-spacing:0.4px';lbl.textContent=title;
-    const arrow=document.createElement('span');arrow.style.cssText='font-size:12px;color:#888780;transition:transform 0.2s';arrow.textContent='▾';
-    hdr.appendChild(lbl);hdr.appendChild(arrow);
-    const body=document.createElement('div');
-    body.style.cssText='display:none;padding:10px 13px;background:#fff';
-    hdr.onclick=()=>{
-      const open=body.style.display!=='none';
-      body.style.display=open?'none':'block';
-      arrow.style.transform=open?'rotate(0deg)':'rotate(-180deg)';
-    };
-    buildFn(body);
-    wrap.appendChild(hdr);wrap.appendChild(body);
-    return wrap;
-  }
 
   // Templates
   if(templates&&templates.length){
