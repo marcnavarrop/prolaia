@@ -1621,10 +1621,11 @@ function renderWorkoutPlanner(modal){
   addBtn.style.cssText='width:100%;padding:13px;background:#fff;border:2px dashed #185FA5;border-radius:12px;color:#185FA5;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px';
   addBtn.innerHTML='<span style="font-size:20px">+</span> Afegir bloc';
   addBtn.onclick=()=>{
-    sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',mesuraText:'',exercises:[]});
+    // Collapse all existing blocks
+    sessionBlocks.forEach(b=>b._expanded=false);
+    sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',repsText:'',secsText:'',exercises:[],_expanded:true,_activeGroup:null,_activeSubgroup:null});
     renderWorkoutPlanner(modal);
-    // Scroll to bottom
-    setTimeout(()=>{const c2=modal.querySelector('[data-scroll]');if(c2)c2.scrollTo({top:c2.scrollHeight,behavior:'smooth'});else content.scrollTo({top:content.scrollHeight,behavior:'smooth'});},150);
+    setTimeout(()=>{const sc=modal.querySelector('[data-scroll]');if(sc)sc.scrollTo({top:sc.scrollHeight,behavior:'smooth'});},150);
   };
   content.appendChild(addBtn);
   content.dataset.scroll='1';
@@ -1632,191 +1633,149 @@ function renderWorkoutPlanner(modal){
 
   // If no blocks yet, auto-add first one
   if(!sessionBlocks.length){
-    sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',mesuraText:'',exercises:[]});
+    sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',repsText:'',secsText:'',exercises:[],_expanded:true,_activeGroup:null,_activeSubgroup:null});
     renderWorkoutPlanner(modal);
   }
 }
 
 function renderPlannerBlock(container,block,bi,modal){
   const wrap=document.createElement('div');
-  wrap.style.cssText='background:#fff;border-radius:12px;border:0.5px solid #D3D1C7;overflow:hidden';
-
-  // Block header with color
+  wrap.style.cssText='background:#fff;border-radius:12px;border:0.5px solid #D3D1C7;overflow:hidden;flex-shrink:0';
   const color=block.systemColor||'#185FA5';
+  const isExpanded=block._expanded!==false; // default expanded
+
+  // ── Collapsed header (always visible) ──
   const blockHdr=document.createElement('div');
-  blockHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:'+color+'22;border-bottom:0.5px solid '+color+'44';
+  blockHdr.style.cssText='display:flex;align-items:center;gap:9px;padding:11px 14px;background:'+color+'18;border-bottom:'+(isExpanded?'0.5px solid '+color+'33':'none')+';cursor:pointer;-webkit-tap-highlight-color:transparent';
+  const dot=document.createElement('div');dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+color+';flex-shrink:0';
+  const titleWrap=document.createElement('div');titleWrap.style.flex='1';
   const blockTitle=document.createElement('div');
-  blockTitle.style.cssText='font-size:12px;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:0.5px';
+  blockTitle.style.cssText='font-size:12px;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:0.4px';
   blockTitle.textContent='Bloc '+(bi+1)+(block.systemNom?' — '+block.systemNom:'');
-  const delBtn=document.createElement('button');
-  delBtn.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:14px;padding:0';
-  delBtn.textContent='✕';
-  delBtn.onclick=()=>{sessionBlocks.splice(bi,1);renderWorkoutPlanner(modal);};
-  blockHdr.appendChild(blockTitle);blockHdr.appendChild(delBtn);
+  const blockSummary=document.createElement('div');
+  blockSummary.style.cssText='font-size:11px;color:#888780;margin-top:1px';
+  blockSummary.textContent=block.exercises.length?block.exercises.length+' exercici'+(block.exercises.length!==1?'s':''):'Sense exercicis';
+  titleWrap.appendChild(blockTitle);titleWrap.appendChild(blockSummary);
+  const rightBtns=document.createElement('div');rightBtns.style.cssText='display:flex;align-items:center;gap:6px';
+  const toggleArrow=document.createElement('span');toggleArrow.style.cssText='font-size:14px;color:'+color+';transition:transform 0.2s';toggleArrow.textContent=isExpanded?'▲':'▼';
+  const delBtn=document.createElement('button');delBtn.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1';delBtn.textContent='✕';
+  delBtn.onclick=(e)=>{e.stopPropagation();sessionBlocks.splice(bi,1);renderWorkoutPlanner(modal);};
+  rightBtns.appendChild(toggleArrow);rightBtns.appendChild(delBtn);
+  blockHdr.appendChild(dot);blockHdr.appendChild(titleWrap);blockHdr.appendChild(rightBtns);
+  blockHdr.onclick=()=>{block._expanded=!block._expanded;renderWorkoutPlanner(modal);};
   wrap.appendChild(blockHdr);
 
+  if(!isExpanded){container.appendChild(wrap);return;}
+
+  // ── Expanded body ──
   const body=document.createElement('div');
   body.style.cssText='padding:12px 14px;display:flex;flex-direction:column;gap:10px';
 
-  // ── System selector ──
-  const sysLabel=document.createElement('div');
-  sysLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
-  sysLabel.textContent='Sistema';
-  const sysRow=document.createElement('div');
-  sysRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+  // System selector
+  const sysLabel=document.createElement('div');sysLabel.style.cssText='font-size:10px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:0.5px';sysLabel.textContent='Sistema';
+  const sysRow=document.createElement('div');sysRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
   trainingSystems.forEach(sys=>{
     const chip=document.createElement('button');
     const sel=block.systemId===sys.id;
-    chip.style.cssText='padding:5px 11px;border-radius:20px;border:1.5px solid '+(sel?sys.color:'#D3D1C7')+';background:'+(sel?sys.color+'22':'#fff')+';color:'+(sel?sys.color:'#5F5E5A')+';font-size:12px;font-weight:'+(sel?'600':'400')+';cursor:pointer;font-family:inherit';
+    chip.style.cssText='padding:5px 12px;border-radius:20px;border:1.5px solid '+(sel?sys.color:'#D3D1C7')+';background:'+(sel?sys.color+'22':'#fff')+';color:'+(sel?sys.color:'#5F5E5A')+';font-size:12px;font-weight:'+(sel?'600':'400')+';cursor:pointer;font-family:inherit;white-space:nowrap';
     chip.textContent=sys.nom;
-    chip.onclick=(()=>{
-      const s=sys;
-      return ()=>{
-        block.systemId=s.id;block.systemNom=s.nom;block.systemColor=s.color;block.systemDesc=s.desc||'';
-        renderWorkoutPlanner(modal);
-      };
-    })();
+    chip.onclick=(s=>()=>{block.systemId=s.id;block.systemNom=s.nom;block.systemColor=s.color;block.systemDesc=s.desc||'';renderWorkoutPlanner(modal);})(sys);
     sysRow.appendChild(chip);
   });
   body.appendChild(sysLabel);body.appendChild(sysRow);
 
-  // ── Mesura (optional free text fields) ──
-  const mesLabel=document.createElement('div');
-  mesLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
-  mesLabel.textContent='Mesura (opcional)';
+  // Mesura
+  const mesLabel=document.createElement('div');mesLabel.style.cssText='font-size:10px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:0.5px';mesLabel.textContent='Mesura (opcional)';
   const mesRow=document.createElement('div');mesRow.style.cssText='display:flex;gap:8px';
-  const repsInput=document.createElement('input');
-  repsInput.placeholder='Repeticions (ex: 10)';
-  repsInput.value=block.repsText||'';
-  repsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none';
+  const repsInput=document.createElement('input');repsInput.placeholder='Repeticions (ex: 10)';repsInput.value=block.repsText||'';
+  repsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;min-width:0';
   repsInput.oninput=()=>{block.repsText=repsInput.value;};
-  const secsInput=document.createElement('input');
-  secsInput.placeholder='Segons (ex: 30)';
-  secsInput.value=block.secsText||'';
-  secsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none';
+  const secsInput=document.createElement('input');secsInput.placeholder='Segons (ex: 30)';secsInput.value=block.secsText||'';
+  secsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;min-width:0';
   secsInput.oninput=()=>{block.secsText=secsInput.value;};
   mesRow.appendChild(repsInput);mesRow.appendChild(secsInput);
   body.appendChild(mesLabel);body.appendChild(mesRow);
 
-  // ── Selected exercises ──
+  // Selected exercises
   if(block.exercises.length){
-    const exLabel=document.createElement('div');
-    exLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
-    exLabel.textContent='Exercicis seleccionats';
+    const exLabel=document.createElement('div');exLabel.style.cssText='font-size:10px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:0.5px';exLabel.textContent='Exercicis seleccionats ('+block.exercises.length+')';
     body.appendChild(exLabel);
     block.exercises.forEach((ex,ei)=>{
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid #F0EEE8';
-      const num=document.createElement('span');num.style.cssText='font-size:10px;color:#888780;min-width:16px';num.textContent=ei+1+'.';
-      const name=document.createElement('span');name.style.cssText='flex:1;font-size:13px;color:#2C2C2A';name.textContent=ex.nom;
-      const setsIn=document.createElement('input');
-      setsIn.value=ex.sets||'';setsIn.placeholder='reps/seg';
-      setsIn.style.cssText='width:70px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:3px 6px;font-family:inherit';
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid #F0EEE8';
+      const num=document.createElement('span');num.style.cssText='font-size:10px;color:#888780;min-width:16px;flex-shrink:0';num.textContent=(ei+1)+'.';
+      const name=document.createElement('span');name.style.cssText='flex:1;font-size:13px;color:#2C2C2A;min-width:0';name.textContent=ex.nom;
+      const setsIn=document.createElement('input');setsIn.value=ex.sets||'';setsIn.placeholder='reps';
+      setsIn.style.cssText='width:60px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:3px 6px;font-family:inherit;flex-shrink:0';
       setsIn.oninput=((b,e)=>function(){sessionBlocks[b].exercises[e].sets=this.value;})(bi,ei);
-      const del=document.createElement('button');del.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:14px;padding:0';del.textContent='×';
+      const del=document.createElement('button');del.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:16px;padding:0 2px;line-height:1;flex-shrink:0';del.textContent='×';
       del.onclick=((b,e)=>()=>{sessionBlocks[b].exercises.splice(e,1);renderWorkoutPlanner(modal);})(bi,ei);
-      row.appendChild(num);row.appendChild(name);row.appendChild(setsIn);row.appendChild(del);
-      body.appendChild(row);
+      row.appendChild(num);row.appendChild(name);row.appendChild(setsIn);row.appendChild(del);body.appendChild(row);
     });
   }
 
-  // ── Exercise library ──
-  const libLabel=document.createElement('div');
-  libLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
-  libLabel.textContent='Afegir exercicis';
+  // Exercise library
+  const libLabel=document.createElement('div');libLabel.style.cssText='font-size:10px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:0.5px';libLabel.textContent='Afegir exercicis';
   body.appendChild(libLabel);
-
-  // Search
-  const search=document.createElement('input');
-  search.placeholder='Cercar exercici...';
+  const search=document.createElement('input');search.placeholder='Cercar exercici...';
   search.style.cssText='width:100%;padding:8px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box';
-
-  // Group filter chips
-  const groupChips=document.createElement('div');
-  groupChips.style.cssText='display:flex;gap:5px;flex-wrap:wrap';
+  const groupChips=document.createElement('div');groupChips.style.cssText='display:flex;gap:5px;flex-wrap:wrap';
+  const subChips=document.createElement('div');subChips.style.cssText='display:none;flex-wrap:wrap;gap:5px';
+  const results=document.createElement('div');results.style.cssText='background:#F8F6F2;border-radius:8px;overflow:hidden';
   let activeGroup=block._activeGroup||null;
   let activeSubgroup=block._activeSubgroup||null;
 
-  // Subgroup chips
-  const subChips=document.createElement('div');
-  subChips.style.cssText='display:flex;gap:5px;flex-wrap:wrap;display:none';
-
-  // Exercise results
-  const results=document.createElement('div');
-  results.style.cssText='background:#F8F6F2;border-radius:8px;overflow:hidden';
-
   function buildGroupChips(){
     groupChips.innerHTML='';
-    const allChip=document.createElement('button');
-    allChip.style.cssText='padding:4px 10px;border-radius:16px;border:1.5px solid '+(activeGroup===null?'#2C2C2A':'#D3D1C7')+';background:'+(activeGroup===null?'#2C2C2A':'#fff')+';color:'+(activeGroup===null?'#fff':'#5F5E5A')+';font-size:11px;cursor:pointer;font-family:inherit';
-    allChip.textContent='Tots';
-    allChip.onclick=()=>{activeGroup=null;activeSubgroup=null;block._activeGroup=null;block._activeSubgroup=null;buildGroupChips();buildSubChips();filterExList();};
-    groupChips.appendChild(allChip);
-    Object.keys(exerciseDB).forEach(g=>{
-      const chip=document.createElement('button');
-      const sel=activeGroup===g;
-      chip.style.cssText='padding:4px 10px;border-radius:16px;border:1.5px solid '+(sel?'#2C2C2A':'#D3D1C7')+';background:'+(sel?'#2C2C2A':'#fff')+';color:'+(sel?'#fff':'#5F5E5A')+';font-size:11px;cursor:pointer;font-family:inherit';
-      chip.textContent=g;
-      chip.onclick=(grp=>()=>{activeGroup=grp;activeSubgroup=null;block._activeGroup=grp;block._activeSubgroup=null;buildGroupChips();buildSubChips();filterExList();})(g);
+    [['Tots',null],...Object.keys(exerciseDB).map(g=>[g,g])].forEach(([lbl,val])=>{
+      const chip=document.createElement('button');const sel=activeGroup===val;
+      chip.style.cssText='padding:4px 10px;border-radius:16px;border:1.5px solid '+(sel?'#2C2C2A':'#D3D1C7')+';background:'+(sel?'#2C2C2A':'#fff')+';color:'+(sel?'#fff':'#5F5E5A')+';font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap';
+      chip.textContent=lbl;
+      chip.onclick=()=>{activeGroup=val;activeSubgroup=null;block._activeGroup=val;block._activeSubgroup=null;buildGroupChips();buildSubChips();filterExList();};
       groupChips.appendChild(chip);
     });
   }
-
   function buildSubChips(){
     subChips.innerHTML='';
     if(!activeGroup){subChips.style.display='none';return;}
-    const exs=exerciseDB[activeGroup]||[];
-    const subs=[...new Set(exs.map(e=>e.subgrup).filter(Boolean))];
+    const subs=[...new Set((exerciseDB[activeGroup]||[]).map(e=>e.subgrup).filter(Boolean))];
     if(!subs.length){subChips.style.display='none';return;}
     subChips.style.display='flex';
-    const allSub=document.createElement('button');
-    allSub.style.cssText='padding:3px 9px;border-radius:14px;border:1.5px solid '+(activeSubgroup===null?'#185FA5':'#D3D1C7')+';background:'+(activeSubgroup===null?'#E6F1FB':'#fff')+';color:'+(activeSubgroup===null?'#185FA5':'#888780')+';font-size:11px;cursor:pointer;font-family:inherit';
-    allSub.textContent='Tots';
-    allSub.onclick=()=>{activeSubgroup=null;block._activeSubgroup=null;buildSubChips();filterExList();};
-    subChips.appendChild(allSub);
-    subs.forEach(sg=>{
-      const chip=document.createElement('button');
-      const sel=activeSubgroup===sg;
-      chip.style.cssText='padding:3px 9px;border-radius:14px;border:1.5px solid '+(sel?'#185FA5':'#D3D1C7')+';background:'+(sel?'#E6F1FB':'#fff')+';color:'+(sel?'#185FA5':'#888780')+';font-size:11px;cursor:pointer;font-family:inherit';
-      chip.textContent=sg;
-      chip.onclick=(s=>()=>{activeSubgroup=s;block._activeSubgroup=s;buildSubChips();filterExList();})(sg);
+    [['Tots',null],...subs.map(s=>[s,s])].forEach(([lbl,val])=>{
+      const chip=document.createElement('button');const sel=activeSubgroup===val;
+      chip.style.cssText='padding:3px 9px;border-radius:14px;border:1.5px solid '+(sel?'#185FA5':'#D3D1C7')+';background:'+(sel?'#E6F1FB':'#fff')+';color:'+(sel?'#185FA5':'#888780')+';font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap';
+      chip.textContent=lbl;
+      chip.onclick=()=>{activeSubgroup=val;block._activeSubgroup=val;buildSubChips();filterExList();};
       subChips.appendChild(chip);
     });
   }
-
   function filterExList(){
     results.innerHTML='';
     const q=search.value.toLowerCase();
-    let all=[];
-    if(activeGroup){
-      all=(exerciseDB[activeGroup]||[]).map(e=>({...e,nom:e.nom||e,group:activeGroup}));
-    } else {
-      all=Object.entries(exerciseDB).flatMap(([g,exs])=>(exs||[]).map(e=>({...e,nom:e.nom||e,group:g})));
-    }
+    let all=activeGroup?(exerciseDB[activeGroup]||[]).map(e=>({...e,nom:e.nom||e,group:activeGroup})):Object.entries(exerciseDB).flatMap(([g,exs])=>(exs||[]).map(e=>({...e,nom:e.nom||e,group:g})));
     if(activeSubgroup) all=all.filter(e=>e.subgrup===activeSubgroup);
     if(q) all=all.filter(e=>e.nom.toLowerCase().includes(q));
-    all.slice(0,40).forEach(ex=>{
+    all.slice(0,50).forEach(ex=>{
       const already=block.exercises.some(e=>e.nom===ex.nom);
       const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #EDECEA;cursor:pointer;background:'+(already?'#F0FFF8':'#fff');
-      row.innerHTML='<div><div style="font-size:12px;font-weight:500;color:#2C2C2A">'+ex.nom+'</div>'
-        +'<div style="font-size:10px;color:#888780">'+ex.group+(ex.subgrup?' · '+ex.subgrup:'')+'</div></div>'
-        +'<span style="font-size:18px;color:'+(already?'#1D9E75':'#185FA5')+'">'+(already?'✓':'＋')+'</span>';
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:0.5px solid #EDECEA;cursor:pointer;background:'+(already?'#F0FFF8':'#fff');
+      const info=document.createElement('div');
+      info.innerHTML='<div style="font-size:13px;font-weight:'+(already?'500':'400')+';color:#2C2C2A">'+ex.nom+'</div>'+(ex.subgrup?'<div style="font-size:10px;color:#888780">'+ex.group+' · '+ex.subgrup+'</div>':'<div style="font-size:10px;color:#888780">'+ex.group+'</div>');
+      const icon=document.createElement('span');icon.style.cssText='font-size:20px;color:'+(already?'#1D9E75':'#185FA5')+';flex-shrink:0';icon.textContent=already?'✓':'＋';
+      row.appendChild(info);row.appendChild(icon);
       row.onclick=(e=>()=>{
-        if(!block.exercises.some(x=>x.nom===e.nom)){
+        if(!sessionBlocks[bi].exercises.some(x=>x.nom===e.nom)){
           sessionBlocks[bi].exercises.push({nom:e.nom,sets:'',mesura:e.mesura||'reps'});
           filterExList();
-          const exLabel=body.querySelector('[data-ex-label]');
+          // Update summary
+          blockSummary.textContent=sessionBlocks[bi].exercises.length+' exercici'+(sessionBlocks[bi].exercises.length!==1?'s':'');
         }
       })(ex);
       results.appendChild(row);
     });
-    if(!all.length) results.innerHTML='<div style="padding:12px;text-align:center;font-size:12px;color:#888780">Cap exercici trobat</div>';
+    if(!all.length) results.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:#888780">Cap exercici trobat</div>';
   }
-
   search.oninput=()=>filterExList();
   buildGroupChips();buildSubChips();filterExList();
-
   body.appendChild(groupChips);body.appendChild(subChips);body.appendChild(search);body.appendChild(results);
   wrap.appendChild(body);
   container.appendChild(wrap);
