@@ -1638,6 +1638,9 @@ function renderWorkoutPlanner(modal){
   const content=document.createElement('div');
   content.style.cssText='flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px;padding-bottom:80px;display:flex;flex-direction:column;gap:12px;min-height:0';
 
+  // Client IDs for history section
+  const currentClientIds=window._plannerClientIds||[];
+
   // Templates
   if(templates&&templates.length){
     const tplWrap=makeCollapsible('\u2605 Plantilles','#FFF9ED','#F5C842',body=>{
