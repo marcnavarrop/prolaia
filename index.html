@@ -1553,6 +1553,7 @@ function initSessionBlocks(){
 }
 
 function openWorkoutPlanner(){
+  window._plannerMode=null;
   // Create or reuse planner modal
   let modal=document.getElementById('workout-planner-modal');
   if(!modal){
@@ -1576,8 +1577,20 @@ function renderWorkoutPlanner(modal){
   hdr.innerHTML='<div style="font-size:16px;font-weight:600;color:#2C2C2A">Planificar entrenament</div>';
   const closeBtn=document.createElement('button');
   closeBtn.style.cssText='background:#185FA5;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:500;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap';
-  closeBtn.textContent='Desar entrenament ✓';
-  closeBtn.onclick=()=>{modal.style.display='none';renderSessionBlocks();toast('✓ Entrenament desat');};
+  if(window._plannerMode==='template'){
+    closeBtn.textContent='Aplicar a plantilla ✓';
+    closeBtn.onclick=()=>{
+      tplBlocks=JSON.parse(JSON.stringify(sessionBlocks));
+      window._plannerMode=null;
+      modal.style.display='none';
+      renderTplBlocksPreview();
+      openDrawer('template-drawer');
+      toast('✓ Blocs aplicats');
+    };
+  } else {
+    closeBtn.textContent='Desar entrenament ✓';
+    closeBtn.onclick=()=>{window._plannerMode=null;modal.style.display='none';renderSessionBlocks();toast('✓ Entrenament desat');};
+  }
   hdr.appendChild(closeBtn);
   modal.appendChild(hdr);
 
@@ -4069,6 +4082,8 @@ function openTemplateDrawer(editId){
 
 function openTemplatePlanner(){
   sessionBlocks=JSON.parse(JSON.stringify(tplBlocks));
+  // Set template mode flag so renderWorkoutPlanner uses right save action
+  window._plannerMode='template';
   let modal=document.getElementById('workout-planner-modal');
   if(!modal){
     modal=document.createElement('div');
@@ -4078,19 +4093,6 @@ function openTemplatePlanner(){
   }
   renderWorkoutPlanner(modal);
   modal.style.display='flex';
-  // Override save button
-  setTimeout(()=>{
-    const hdr=modal.querySelector('button');
-    if(hdr){
-      hdr.textContent='Aplicar a plantilla \u2713';
-      hdr.onclick=()=>{
-        tplBlocks=JSON.parse(JSON.stringify(sessionBlocks));
-        modal.style.display='none';
-        renderTplBlocksPreview();
-        openDrawer('template-drawer');
-      };
-    }
-  },50);
 }
 
 function renderTplBlocksPreview(){
