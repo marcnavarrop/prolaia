@@ -1754,15 +1754,15 @@ function renderPlannerBlock(container,block,bi,modal){
     all.slice(0,50).forEach(ex=>{
       const already=block.exercises.some(e=>e.nom===ex.nom);
       const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:0.5px solid #EDECEA;cursor:pointer;background:'+(already?'#F0FFF8':'#fff');
-      const info=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:0.5px solid #EDECEA;cursor:pointer;background:'+(already?'#F0FFF8':'#fff');
+      const info=document.createElement('div');info.style.flex='1';
       info.innerHTML='<div style="font-size:13px;font-weight:'+(already?'500':'400')+';color:#2C2C2A">'+ex.nom+'</div>'+(ex.subgrup?'<div style="font-size:10px;color:#888780">'+ex.group+' · '+ex.subgrup+'</div>':'<div style="font-size:10px;color:#888780">'+ex.group+'</div>');
       const icon=document.createElement('span');icon.style.cssText='font-size:20px;color:'+(already?'#1D9E75':'#185FA5')+';flex-shrink:0';icon.textContent=already?'✓':'＋';
             // Inline sets input (right of name, before icon)
       const setsIn=document.createElement('input');
-      setsIn.placeholder='10x3';
+      setsIn.placeholder='';
       setsIn.value=already?(block.exercises.find(x=>x.nom===ex.nom)||{}).sets||'':'';
-      setsIn.style.cssText='width:58px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:4px 5px;font-family:inherit;flex-shrink:0;outline:none;background:#F8F6F2';
+      setsIn.style.cssText='width:52px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:4px 5px;font-family:inherit;flex-shrink:0;outline:none;background:#F8F6F2';
       setsIn.onclick=(ev)=>ev.stopPropagation();
       setsIn.oninput=()=>{const ex2=sessionBlocks[bi].exercises.find(x=>x.nom===ex.nom);if(ex2)ex2.sets=setsIn.value;};
       row.appendChild(info);row.appendChild(setsIn);row.appendChild(icon);
