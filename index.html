@@ -1546,209 +1546,286 @@ function deleteSystem(id){
 }
 
 // ── SESSION BLOCKS ──
-let sessionBlocks=[]; // [{systemId, systemNom, systemColor, exercises:[{nom,sets,mesura}]}]
+let sessionBlocks=[];
 
 function initSessionBlocks(){
   sessionBlocks=[];
-  renderSessionBlocks();
 }
 
-function addSessionBlock(){
-  if(!trainingSystems.length){toast('Primer crea un sistema a Exercicis → Sistemes');return;}
-  let modal=document.getElementById('backup-modal');
+function openWorkoutPlanner(){
+  // Create or reuse planner modal
+  let modal=document.getElementById('workout-planner-modal');
   if(!modal){
     modal=document.createElement('div');
-    modal.id='backup-modal';
-    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+    modal.id='workout-planner-modal';
+    modal.style.cssText='position:fixed;inset:0;background:#F0EEE8;z-index:9990;display:flex;flex-direction:column;overflow:hidden';
     document.body.appendChild(modal);
   }
-  modal.innerHTML='';modal.style.display='flex';
-  const box=document.createElement('div');
-  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:20px;width:100%;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px';
-  const t1=document.createElement('div');t1.style.cssText='font-size:14px;font-weight:500;color:#2C2C2A';t1.textContent='1. Selecciona el sistema';box.appendChild(t1);
-  const sysList=document.createElement('div');sysList.style.cssText='display:flex;flex-direction:column;gap:6px';
-  let selectedSys=null,selectedMesura='reps';
-  const sysCards=[];
-  trainingSystems.forEach(sys=>{
-    const btn=document.createElement('div');
-    btn.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 13px;background:#fff;border:2px solid #D3D1C7;border-radius:9px;cursor:pointer';
-    const dot=document.createElement('div');dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+sys.color+';flex-shrink:0';
-    const info=document.createElement('div');
-    info.innerHTML='<div style="font-size:13px;font-weight:500;color:#2C2C2A">'+sys.nom+'</div>'+(sys.desc?'<div style="font-size:11px;color:#888780">'+sys.desc+'</div>':'');
-    btn.appendChild(dot);btn.appendChild(info);
-    btn.onclick=(s=>()=>{
-      selectedSys=s;
-      sysCards.forEach(b=>b.style.borderColor='#D3D1C7');
-      btn.style.borderColor=s.color;
-      mesuraSection.style.display='flex';
-    })(sys);
-    sysList.appendChild(btn);sysCards.push(btn);
-  });
-  box.appendChild(sysList);
-  const mesuraSection=document.createElement('div');
-  mesuraSection.style.cssText='display:none;flex-direction:column;gap:8px;margin-top:4px';
-  const t2=document.createElement('div');t2.style.cssText='font-size:14px;font-weight:500;color:#2C2C2A';t2.textContent='2. Tipus de mesura del bloc';
-  const mesuraBtns=document.createElement('div');mesuraBtns.style.cssText='display:flex;gap:8px';
-  const repsBtn=document.createElement('button');
-  repsBtn.style.cssText='flex:1;padding:10px;border:2px solid #185FA5;border-radius:8px;background:#E6F1FB;color:#185FA5;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer';
-  repsBtn.textContent='🔢 Repeticions';
-  const secsBtn=document.createElement('button');
-  secsBtn.style.cssText='flex:1;padding:10px;border:2px solid #D3D1C7;border-radius:8px;background:#fff;color:#5F5E5A;font-family:inherit;font-size:13px;cursor:pointer';
-  secsBtn.textContent='⏱ Segons';
-  function setMesura(m){
-    selectedMesura=m;
-    repsBtn.style.borderColor=m==='reps'?'#185FA5':'#D3D1C7';
-    repsBtn.style.background=m==='reps'?'#E6F1FB':'#fff';
-    repsBtn.style.color=m==='reps'?'#185FA5':'#5F5E5A';
-    secsBtn.style.borderColor=m==='seconds'?'#185FA5':'#D3D1C7';
-    secsBtn.style.background=m==='seconds'?'#E6F1FB':'#fff';
-    secsBtn.style.color=m==='seconds'?'#185FA5':'#5F5E5A';
-  }
-  repsBtn.onclick=()=>setMesura('reps');
-  secsBtn.onclick=()=>setMesura('seconds');
-  mesuraBtns.appendChild(repsBtn);mesuraBtns.appendChild(secsBtn);
-  mesuraSection.appendChild(t2);mesuraSection.appendChild(mesuraBtns);
-  box.appendChild(mesuraSection);
-  const confirmBtn=document.createElement('button');
-  confirmBtn.style.cssText='padding:11px;background:#185FA5;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px';
-  confirmBtn.textContent='Crear bloc i afegir exercicis →';
-  confirmBtn.onclick=()=>{
-    if(!selectedSys){toast('Selecciona un sistema primer');return;}
-    sessionBlocks.push({systemId:selectedSys.id,systemNom:selectedSys.nom,systemColor:selectedSys.color,systemDesc:selectedSys.desc||'',mesura:selectedMesura,exercises:[]});
-    modal.style.display='none';
-    renderSessionBlocks();
-    setTimeout(()=>openBlockExPicker(sessionBlocks.length-1),200);
-  };
-  const cancelBtn=document.createElement('button');
-  cancelBtn.style.cssText='padding:10px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit';
-  cancelBtn.textContent='Cancel·lar';
-  cancelBtn.onclick=()=>modal.style.display='none';
-  const row=document.createElement('div');row.style.cssText='display:flex;gap:8px';
-  row.appendChild(cancelBtn);row.appendChild(confirmBtn);
-  box.appendChild(row);
-  modal.appendChild(box);
+  renderWorkoutPlanner(modal);
+  modal.style.display='flex';
 }
 
-function removeSessionBlock(idx){
-  sessionBlocks.splice(idx,1);
-  renderSessionBlocks();
+function renderWorkoutPlanner(modal){
+  if(!modal) modal=document.getElementById('workout-planner-modal');
+  if(!modal) return;
+  modal.innerHTML='';
+
+  // Header
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff;border-bottom:0.5px solid #D3D1C7;flex-shrink:0';
+  hdr.innerHTML='<div style="font-size:16px;font-weight:600;color:#2C2C2A">Planificar entrenament</div>';
+  const closeBtn=document.createElement('button');
+  closeBtn.style.cssText='background:#F0EEE8;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center';
+  closeBtn.textContent='✕';
+  closeBtn.onclick=()=>{modal.style.display='none';renderSessionBlocks();};
+  hdr.appendChild(closeBtn);
+  modal.appendChild(hdr);
+
+  // Scrollable content
+  const content=document.createElement('div');
+  content.style.cssText='flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px';
+
+  // Render each block
+  sessionBlocks.forEach((block,bi)=>renderPlannerBlock(content,block,bi,modal));
+
+  // + Add block button
+  const addBtn=document.createElement('button');
+  addBtn.style.cssText='width:100%;padding:13px;background:#fff;border:2px dashed #185FA5;border-radius:12px;color:#185FA5;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px';
+  addBtn.innerHTML='<span style="font-size:20px">+</span> Afegir bloc';
+  addBtn.onclick=()=>{
+    sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',mesuraText:'',exercises:[]});
+    renderWorkoutPlanner(modal);
+    // Scroll to bottom
+    setTimeout(()=>content.scrollTo({top:content.scrollHeight,behavior:'smooth'}),100);
+  };
+  content.appendChild(addBtn);
+  modal.appendChild(content);
+
+  // If no blocks yet, auto-add first one
+  if(!sessionBlocks.length){
+    sessionBlocks.push({systemId:null,systemNom:'',systemColor:'#185FA5',systemDesc:'',mesura:'',mesuraText:'',exercises:[]});
+    renderWorkoutPlanner(modal);
+  }
+}
+
+function renderPlannerBlock(container,block,bi,modal){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='background:#fff;border-radius:12px;border:0.5px solid #D3D1C7;overflow:hidden';
+
+  // Block header with color
+  const color=block.systemColor||'#185FA5';
+  const blockHdr=document.createElement('div');
+  blockHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:'+color+'22;border-bottom:0.5px solid '+color+'44';
+  const blockTitle=document.createElement('div');
+  blockTitle.style.cssText='font-size:12px;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:0.5px';
+  blockTitle.textContent='Bloc '+(bi+1)+(block.systemNom?' — '+block.systemNom:'');
+  const delBtn=document.createElement('button');
+  delBtn.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:14px;padding:0';
+  delBtn.textContent='✕';
+  delBtn.onclick=()=>{sessionBlocks.splice(bi,1);renderWorkoutPlanner(modal);};
+  blockHdr.appendChild(blockTitle);blockHdr.appendChild(delBtn);
+  wrap.appendChild(blockHdr);
+
+  const body=document.createElement('div');
+  body.style.cssText='padding:12px 14px;display:flex;flex-direction:column;gap:10px';
+
+  // ── System selector ──
+  const sysLabel=document.createElement('div');
+  sysLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
+  sysLabel.textContent='Sistema';
+  const sysRow=document.createElement('div');
+  sysRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+  trainingSystems.forEach(sys=>{
+    const chip=document.createElement('button');
+    const sel=block.systemId===sys.id;
+    chip.style.cssText='padding:5px 11px;border-radius:20px;border:1.5px solid '+(sel?sys.color:'#D3D1C7')+';background:'+(sel?sys.color+'22':'#fff')+';color:'+(sel?sys.color:'#5F5E5A')+';font-size:12px;font-weight:'+(sel?'600':'400')+';cursor:pointer;font-family:inherit';
+    chip.textContent=sys.nom;
+    chip.onclick=(()=>{
+      const s=sys;
+      return ()=>{
+        block.systemId=s.id;block.systemNom=s.nom;block.systemColor=s.color;block.systemDesc=s.desc||'';
+        renderWorkoutPlanner(modal);
+      };
+    })();
+    sysRow.appendChild(chip);
+  });
+  body.appendChild(sysLabel);body.appendChild(sysRow);
+
+  // ── Mesura (optional free text fields) ──
+  const mesLabel=document.createElement('div');
+  mesLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
+  mesLabel.textContent='Mesura (opcional)';
+  const mesRow=document.createElement('div');mesRow.style.cssText='display:flex;gap:8px';
+  const repsInput=document.createElement('input');
+  repsInput.placeholder='Repeticions (ex: 10)';
+  repsInput.value=block.repsText||'';
+  repsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none';
+  repsInput.oninput=()=>{block.repsText=repsInput.value;};
+  const secsInput=document.createElement('input');
+  secsInput.placeholder='Segons (ex: 30)';
+  secsInput.value=block.secsText||'';
+  secsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none';
+  secsInput.oninput=()=>{block.secsText=secsInput.value;};
+  mesRow.appendChild(repsInput);mesRow.appendChild(secsInput);
+  body.appendChild(mesLabel);body.appendChild(mesRow);
+
+  // ── Selected exercises ──
+  if(block.exercises.length){
+    const exLabel=document.createElement('div');
+    exLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
+    exLabel.textContent='Exercicis seleccionats';
+    body.appendChild(exLabel);
+    block.exercises.forEach((ex,ei)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid #F0EEE8';
+      const num=document.createElement('span');num.style.cssText='font-size:10px;color:#888780;min-width:16px';num.textContent=ei+1+'.';
+      const name=document.createElement('span');name.style.cssText='flex:1;font-size:13px;color:#2C2C2A';name.textContent=ex.nom;
+      const setsIn=document.createElement('input');
+      setsIn.value=ex.sets||'';setsIn.placeholder='reps/seg';
+      setsIn.style.cssText='width:70px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:3px 6px;font-family:inherit';
+      setsIn.oninput=((b,e)=>function(){sessionBlocks[b].exercises[e].sets=this.value;})(bi,ei);
+      const del=document.createElement('button');del.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:14px;padding:0';del.textContent='×';
+      del.onclick=((b,e)=>()=>{sessionBlocks[b].exercises.splice(e,1);renderWorkoutPlanner(modal);})(bi,ei);
+      row.appendChild(num);row.appendChild(name);row.appendChild(setsIn);row.appendChild(del);
+      body.appendChild(row);
+    });
+  }
+
+  // ── Exercise library ──
+  const libLabel=document.createElement('div');
+  libLabel.style.cssText='font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:0.4px';
+  libLabel.textContent='Afegir exercicis';
+  body.appendChild(libLabel);
+
+  // Search
+  const search=document.createElement('input');
+  search.placeholder='Cercar exercici...';
+  search.style.cssText='width:100%;padding:8px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box';
+
+  // Group filter chips
+  const groupChips=document.createElement('div');
+  groupChips.style.cssText='display:flex;gap:5px;flex-wrap:wrap';
+  let activeGroup=block._activeGroup||null;
+  let activeSubgroup=block._activeSubgroup||null;
+
+  // Subgroup chips
+  const subChips=document.createElement('div');
+  subChips.style.cssText='display:flex;gap:5px;flex-wrap:wrap;display:none';
+
+  // Exercise results
+  const results=document.createElement('div');
+  results.style.cssText='background:#F8F6F2;border-radius:8px;overflow:hidden;max-height:200px;overflow-y:auto';
+
+  function buildGroupChips(){
+    groupChips.innerHTML='';
+    const allChip=document.createElement('button');
+    allChip.style.cssText='padding:4px 10px;border-radius:16px;border:1.5px solid '+(activeGroup===null?'#2C2C2A':'#D3D1C7')+';background:'+(activeGroup===null?'#2C2C2A':'#fff')+';color:'+(activeGroup===null?'#fff':'#5F5E5A')+';font-size:11px;cursor:pointer;font-family:inherit';
+    allChip.textContent='Tots';
+    allChip.onclick=()=>{activeGroup=null;activeSubgroup=null;block._activeGroup=null;block._activeSubgroup=null;buildGroupChips();buildSubChips();filterExList();};
+    groupChips.appendChild(allChip);
+    Object.keys(exerciseDB).forEach(g=>{
+      const chip=document.createElement('button');
+      const sel=activeGroup===g;
+      chip.style.cssText='padding:4px 10px;border-radius:16px;border:1.5px solid '+(sel?'#2C2C2A':'#D3D1C7')+';background:'+(sel?'#2C2C2A':'#fff')+';color:'+(sel?'#fff':'#5F5E5A')+';font-size:11px;cursor:pointer;font-family:inherit';
+      chip.textContent=g;
+      chip.onclick=(grp=>()=>{activeGroup=grp;activeSubgroup=null;block._activeGroup=grp;block._activeSubgroup=null;buildGroupChips();buildSubChips();filterExList();})(g);
+      groupChips.appendChild(chip);
+    });
+  }
+
+  function buildSubChips(){
+    subChips.innerHTML='';
+    if(!activeGroup){subChips.style.display='none';return;}
+    const exs=exerciseDB[activeGroup]||[];
+    const subs=[...new Set(exs.map(e=>e.subgrup).filter(Boolean))];
+    if(!subs.length){subChips.style.display='none';return;}
+    subChips.style.display='flex';
+    const allSub=document.createElement('button');
+    allSub.style.cssText='padding:3px 9px;border-radius:14px;border:1.5px solid '+(activeSubgroup===null?'#185FA5':'#D3D1C7')+';background:'+(activeSubgroup===null?'#E6F1FB':'#fff')+';color:'+(activeSubgroup===null?'#185FA5':'#888780')+';font-size:11px;cursor:pointer;font-family:inherit';
+    allSub.textContent='Tots';
+    allSub.onclick=()=>{activeSubgroup=null;block._activeSubgroup=null;buildSubChips();filterExList();};
+    subChips.appendChild(allSub);
+    subs.forEach(sg=>{
+      const chip=document.createElement('button');
+      const sel=activeSubgroup===sg;
+      chip.style.cssText='padding:3px 9px;border-radius:14px;border:1.5px solid '+(sel?'#185FA5':'#D3D1C7')+';background:'+(sel?'#E6F1FB':'#fff')+';color:'+(sel?'#185FA5':'#888780')+';font-size:11px;cursor:pointer;font-family:inherit';
+      chip.textContent=sg;
+      chip.onclick=(s=>()=>{activeSubgroup=s;block._activeSubgroup=s;buildSubChips();filterExList();})(sg);
+      subChips.appendChild(chip);
+    });
+  }
+
+  function filterExList(){
+    results.innerHTML='';
+    const q=search.value.toLowerCase();
+    let all=[];
+    if(activeGroup){
+      all=(exerciseDB[activeGroup]||[]).map(e=>({...e,nom:e.nom||e,group:activeGroup}));
+    } else {
+      all=Object.entries(exerciseDB).flatMap(([g,exs])=>(exs||[]).map(e=>({...e,nom:e.nom||e,group:g})));
+    }
+    if(activeSubgroup) all=all.filter(e=>e.subgrup===activeSubgroup);
+    if(q) all=all.filter(e=>e.nom.toLowerCase().includes(q));
+    all.slice(0,40).forEach(ex=>{
+      const already=block.exercises.some(e=>e.nom===ex.nom);
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:0.5px solid #EDECEA;cursor:pointer;background:'+(already?'#F0FFF8':'#fff');
+      row.innerHTML='<div><div style="font-size:12px;font-weight:500;color:#2C2C2A">'+ex.nom+'</div>'
+        +'<div style="font-size:10px;color:#888780">'+ex.group+(ex.subgrup?' · '+ex.subgrup:'')+'</div></div>'
+        +'<span style="font-size:18px;color:'+(already?'#1D9E75':'#185FA5')+'">'+(already?'✓':'＋')+'</span>';
+      row.onclick=(e=>()=>{
+        if(!block.exercises.some(x=>x.nom===e.nom)){
+          sessionBlocks[bi].exercises.push({nom:e.nom,sets:'',mesura:e.mesura||'reps'});
+          filterExList();
+          const exLabel=body.querySelector('[data-ex-label]');
+        }
+      })(ex);
+      results.appendChild(row);
+    });
+    if(!all.length) results.innerHTML='<div style="padding:12px;text-align:center;font-size:12px;color:#888780">Cap exercici trobat</div>';
+  }
+
+  search.oninput=()=>filterExList();
+  buildGroupChips();buildSubChips();filterExList();
+
+  body.appendChild(groupChips);body.appendChild(subChips);body.appendChild(search);body.appendChild(results);
+  wrap.appendChild(body);
+  container.appendChild(wrap);
 }
 
 function renderSessionBlocks(){
   const el=document.getElementById('sf-blocks-container');if(!el)return;
   el.innerHTML='';
-  sessionBlocks.forEach((block,bi)=>{
-    const wrap=document.createElement('div');
-    wrap.style.cssText='background:#fff;border:0.5px solid #D3D1C7;border-radius:10px;margin-bottom:8px;overflow:hidden';
-    // Block header
-    const hdr=document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;gap:9px;padding:10px 12px;background:'+block.systemColor+'22;border-bottom:0.5px solid '+block.systemColor+'44';
-    const dot=document.createElement('div');
-    dot.style.cssText='width:10px;height:10px;border-radius:50%;background:'+block.systemColor+';flex-shrink:0';
-    const lbl=document.createElement('span');
-    lbl.style.cssText='font-size:12px;font-weight:600;color:#2C2C2A;flex:1;text-transform:uppercase;letter-spacing:0.3px';
-    lbl.textContent=block.systemNom;
-    const delBtn=document.createElement('button');
-    delBtn.style.cssText='background:none;border:none;color:#888780;cursor:pointer;font-size:14px;padding:0';
-    delBtn.textContent='✕';
-    delBtn.onclick=((idx)=>()=>removeSessionBlock(idx))(bi);
-    hdr.appendChild(dot);hdr.appendChild(lbl);hdr.appendChild(delBtn);
-    wrap.appendChild(hdr);
-    // Exercises in block
-    const exList=document.createElement('div');
-    exList.style.cssText='padding:6px 10px';
-    block.exercises.forEach((ex,ei)=>{
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:0.5px solid #F0EEE8';
-      const nameEl=document.createElement('span');
-      nameEl.style.cssText='font-size:12px;color:#2C2C2A;flex:1';
-      nameEl.textContent=ex.nom;
-      // Sets input
-      const setsInput=document.createElement('input');
-      setsInput.value=ex.sets||'';
-      setsInput.placeholder=ex.mesura==='seconds'?'30\'\' x3':'10 x3';
-      setsInput.style.cssText='width:60px;font-size:11px;text-align:center;border:0.5px solid #D3D1C7;border-radius:5px;padding:3px 5px;font-family:inherit';
-      setsInput.addEventListener('change',((b,e)=>function(){sessionBlocks[b].exercises[e].sets=this.value;})(bi,ei));
-      // Mesura badge
-      const mesuraBadge=document.createElement('span');
-      mesuraBadge.style.cssText='font-size:9px;color:#888780;background:#F0EEE8;padding:2px 5px;border-radius:4px';
-      mesuraBadge.textContent=ex.mesura==='seconds'?'seg':'rep';
-      const delEx=document.createElement('button');
-      delEx.style.cssText='background:none;border:none;color:#B4B2A9;cursor:pointer;font-size:13px;padding:0';
-      delEx.textContent='×';
-      delEx.onclick=((b,e)=>()=>{sessionBlocks[b].exercises.splice(e,1);renderSessionBlocks();})(bi,ei);
-      row.appendChild(nameEl);row.appendChild(mesuraBadge);row.appendChild(setsInput);row.appendChild(delEx);
-      exList.appendChild(row);
-    });
-    // Add exercise button
-    const addExBtn=document.createElement('button');
-    addExBtn.style.cssText='width:100%;padding:7px;margin-top:5px;background:#F8F6F2;border:0.5px dashed #D3D1C7;border-radius:7px;font-size:11px;color:#888780;cursor:pointer;font-family:inherit';
-    addExBtn.textContent='+ Afegir exercici';
-    addExBtn.onclick=((idx)=>()=>openBlockExPicker(idx))(bi);
-    exList.appendChild(addExBtn);
-    wrap.appendChild(exList);
-    el.appendChild(wrap);
-  });
-  // Update count
+  const addBlocBtn=document.getElementById('sf-add-bloc-btn');
+  if(addBlocBtn) addBlocBtn.style.display=sessionBlocks.length?'block':'none';
   const countEl=document.getElementById('sf-ex-count');
   const totalEx=sessionBlocks.reduce((a,b)=>a+b.exercises.length,0);
-  if(countEl) countEl.textContent=sessionBlocks.length?
-    sessionBlocks.length+' bloc'+(sessionBlocks.length!==1?'s':'')+' · '+totalEx+' exercici'+(totalEx!==1?'s':'')
-    :'Toca per afegir blocs d\'entrenament';
+  if(countEl) countEl.textContent=sessionBlocks.length
+    ?sessionBlocks.length+' bloc'+(sessionBlocks.length!==1?'s':'')+' · '+totalEx+' exercici'+(totalEx!==1?'s':'')
+    :'Toca per planificar l\'entrenament';
+  sessionBlocks.forEach((block,bi)=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:9px;border:0.5px solid #D3D1C7;padding:9px 12px;margin-bottom:6px';
+    const color=block.systemColor||'#185FA5';
+    const hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:4px';
+    const dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0';
+    const lbl=document.createElement('span');lbl.style.cssText='font-size:12px;font-weight:600;color:'+color;
+    lbl.textContent=block.systemNom||('Bloc '+(bi+1));
+    const cnt=document.createElement('span');cnt.style.cssText='font-size:11px;color:#888780;margin-left:auto';
+    cnt.textContent=block.exercises.length+' ex.';
+    hdr.appendChild(dot);hdr.appendChild(lbl);hdr.appendChild(cnt);
+    card.appendChild(hdr);
+    if(block.exercises.length){
+      const exList=document.createElement('div');exList.style.cssText='font-size:11px;color:#5F5E5A;line-height:1.8';
+      exList.textContent=block.exercises.map(e=>e.nom).join(', ');
+      card.appendChild(exList);
+    }
+    el.appendChild(card);
+  });
 }
 
-function openBlockExPicker(blockIdx){
-  let modal=document.getElementById('backup-modal');
-  if(!modal){
-    modal=document.createElement('div');
-    modal.id='backup-modal';
-    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML='';
-  modal.style.display='flex';
-  const box=document.createElement('div');
-  box.style.cssText='background:#F0EEE8;border-radius:14px;padding:16px;max-height:85vh;overflow-y:auto;width:100%;display:flex;flex-direction:column;gap:8px';
-  const title=document.createElement('div');
-  title.style.cssText='font-size:14px;font-weight:500;color:#2C2C2A;margin-bottom:4px';
-  title.textContent='Afegir exercici al bloc';
-  box.appendChild(title);
-  // Search
-  const search=document.createElement('input');
-  search.placeholder='Cercar exercici...';
-  search.style.cssText='width:100%;padding:8px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box';
-  // Results container
-  const results=document.createElement('div');
-  results.style.cssText='background:#fff;border-radius:8px;overflow:hidden;max-height:300px;overflow-y:auto';
-  function filterPicker(q){
-    results.innerHTML='';
-    const all=Object.entries(exerciseDB).flatMap(([g,exs])=>(exs||[]).map(e=>({...e,group:g,nom:e.nom||e})));
-    const filtered=q?all.filter(e=>e.nom.toLowerCase().includes(q.toLowerCase())):all;
-    filtered.slice(0,30).forEach(ex=>{
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:0.5px solid #F0EEE8;cursor:pointer';
-      row.innerHTML='<div><div style="font-size:12px;font-weight:500;color:#2C2C2A">'+ex.nom+'</div>'
-        +'<div style="font-size:10px;color:#888780">'+ex.group+(ex.subgrup?' · '+ex.subgrup:'')+'</div></div>'
-        +'<span style="font-size:10px;background:#F0EEE8;padding:2px 7px;border-radius:4px;color:#5F5E5A">'+(ex.mesura==='seconds'?'Seg':'Rep')+'</span>';
-      row.onclick=((e)=>()=>{
-        sessionBlocks[blockIdx].exercises.push({nom:e.nom,sets:e.mesura==='seconds'?'30\'\'':'10',mesura:e.mesura||'reps'});
-        modal.style.display='none';
-        renderSessionBlocks();
-      })(ex);
-      results.appendChild(row);
-    });
-    if(!filtered.length) results.innerHTML='<div style="padding:12px;text-align:center;font-size:12px;color:#888780">Cap exercici trobat</div>';
-  }
-  search.oninput=()=>filterPicker(search.value);
-  filterPicker('');
-  const cancel=document.createElement('button');
-  cancel.style.cssText='width:100%;padding:10px;background:#D3D1C7;color:#2C2C2A;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit';
-  cancel.textContent='Cancel·lar';
-  cancel.onclick=()=>modal.style.display='none';
-  box.appendChild(search);box.appendChild(results);box.appendChild(cancel);
-  modal.appendChild(box);
-  setTimeout(()=>search.focus(),200);
-}
+function addSessionBlock(){openWorkoutPlanner();}
+function openBlockExPicker(blockIdx){openWorkoutPlanner();}
 
 // ── WORKOUT VIEW ──
 function openWorkoutView(sessId){
