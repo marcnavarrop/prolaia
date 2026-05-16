@@ -1950,7 +1950,7 @@ function renderSessionBlocks(){
 }
 
 function addSessionBlock(){
-  const ids=Array.from(document.querySelectorAll('.csel-cb:checked')).map(cb=>parseInt(cb.dataset.id)).filter(Boolean);
+  const ids=getSelectedClientIds();
   openWorkoutPlanner(ids);
 }
 function openBlockExPicker(blockIdx){openWorkoutPlanner();}
