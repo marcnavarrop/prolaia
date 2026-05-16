@@ -1687,13 +1687,10 @@ function renderPlannerBlock(container,block,bi,modal){
   // Mesura
   const mesLabel=document.createElement('div');mesLabel.style.cssText='font-size:10px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:0.5px';mesLabel.textContent='Mesura (opcional)';
   const mesRow=document.createElement('div');mesRow.style.cssText='display:flex;gap:8px';
-  const repsInput=document.createElement('input');repsInput.placeholder='Repeticions (ex: 10)';repsInput.value=block.repsText||'';
-  repsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;min-width:0';
-  repsInput.oninput=()=>{block.repsText=repsInput.value;};
-  const secsInput=document.createElement('input');secsInput.placeholder='Segons (ex: 30)';secsInput.value=block.secsText||'';
-  secsInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;min-width:0';
-  secsInput.oninput=()=>{block.secsText=secsInput.value;};
-  mesRow.appendChild(repsInput);mesRow.appendChild(secsInput);
+  const mesInput=document.createElement('input');mesInput.placeholder='Ex: 10 rep x3, 30 seg x4…';mesInput.value=block.repsText||'';
+  mesInput.style.cssText='flex:1;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;outline:none;min-width:0';
+  mesInput.oninput=()=>{block.repsText=mesInput.value;block.secsText='';};
+  mesRow.appendChild(mesInput);
   body.appendChild(mesLabel);body.appendChild(mesRow);
 
   // Selected exercises
@@ -1761,16 +1758,24 @@ function renderPlannerBlock(container,block,bi,modal){
       const info=document.createElement('div');
       info.innerHTML='<div style="font-size:13px;font-weight:'+(already?'500':'400')+';color:#2C2C2A">'+ex.nom+'</div>'+(ex.subgrup?'<div style="font-size:10px;color:#888780">'+ex.group+' · '+ex.subgrup+'</div>':'<div style="font-size:10px;color:#888780">'+ex.group+'</div>');
       const icon=document.createElement('span');icon.style.cssText='font-size:20px;color:'+(already?'#1D9E75':'#185FA5')+';flex-shrink:0';icon.textContent=already?'✓':'＋';
-      row.appendChild(info);row.appendChild(icon);
-      row.onclick=(e=>()=>{
-        if(!sessionBlocks[bi].exercises.some(x=>x.nom===e.nom)){
-          // Show quick input for sets before adding
-          const setsVal=prompt((e.mesura==='seconds'?'Segons i s\u00e8ries':'Repeticions i s\u00e8ries')+' per "'+e.nom+'" (ex: 10x3 o 30\'\'x4):','');
-          sessionBlocks[bi].exercises.push({nom:e.nom,sets:setsVal||'',mesura:e.mesura||'reps'});
-          filterExList();
+            // Inline sets input (right of name, before icon)
+      const setsIn=document.createElement('input');
+      setsIn.placeholder='10x3';
+      setsIn.value=already?(block.exercises.find(x=>x.nom===ex.nom)||{}).sets||'':'';
+      setsIn.style.cssText='width:58px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:4px 5px;font-family:inherit;flex-shrink:0;outline:none;background:#F8F6F2';
+      setsIn.onclick=(ev)=>ev.stopPropagation();
+      setsIn.oninput=()=>{const ex2=sessionBlocks[bi].exercises.find(x=>x.nom===ex.nom);if(ex2)ex2.sets=setsIn.value;};
+      row.appendChild(info);row.appendChild(setsIn);row.appendChild(icon);
+      const addEx=(curEx)=>()=>{
+        if(!sessionBlocks[bi].exercises.some(x=>x.nom===curEx.nom)){
+          sessionBlocks[bi].exercises.push({nom:curEx.nom,sets:setsIn.value||'',mesura:curEx.mesura||'reps'});
+          row.style.background='#F0FFF8';
+          icon.textContent='✓';icon.style.color='#1D9E75';
+          setsIn.style.background='#E8F7F0';
           blockSummary.textContent=sessionBlocks[bi].exercises.length+' exercici'+(sessionBlocks[bi].exercises.length!==1?'s':'');
         }
-      })(ex);
+      };
+      row.onclick=addEx(ex);icon.onclick=(ev)=>{ev.stopPropagation();addEx(ex)();};
       results.appendChild(row);
     });
     if(!all.length) results.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:#888780">Cap exercici trobat</div>';
