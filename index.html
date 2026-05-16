@@ -559,6 +559,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
         <button class="cal-nav-btn" onclick="shiftWeek(-1)">‹</button>
         <div class="cal-nav-title" id="cal-week-label">—</div>
         <button class="cal-nav-btn" onclick="shiftWeek(1)">›</button>
+        <button onclick="goToToday()" style="padding:3px 10px;background:#185FA5;color:#fff;border:none;border-radius:12px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;margin-left:4px">Avui</button>
       </div>
       <div class="week-strip" id="week-strip"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
@@ -854,6 +855,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:#DEDAD3;min-height:10
       <div class="type-opt" id="stype-grupo" onclick="selSessType('grupo')"><div class="type-opt-icon">👥</div><div class="type-opt-label">Grup</div></div>
     </div>
     <div class="drawer-section">Selecciona client(s)</div>
+    <input id="sf-client-search" placeholder="Cercar client..." oninput="filterSfClientList(this.value)" style="width:100%;padding:7px 10px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:6px;box-sizing:border-box;outline:none">
     <div id="sf-client-list" class="client-select-list"></div>
     <div id="sf-client-hint" class="client-select-hint">Selecciona 1 client</div>
     <!-- Client history (auto-appears when 1 client selected) -->
@@ -2566,8 +2568,8 @@ function renderHomeClients(){
 function renderCalendar(){
   const endOfWeek=addDays(currentWeekMonday,6);
   document.getElementById('cal-week-label').textContent=
-    currentWeekMonday.getDate()+' '+MONTHS[currentWeekMonday.getMonth()].slice(0,3)+' – '+
-    endOfWeek.getDate()+' '+MONTHS[endOfWeek.getMonth()].slice(0,3)+' '+endOfWeek.getFullYear();
+    currentWeekMonday.getDate()+' '+MONTHS[currentWeekMonday.getMonth()]+' – '+
+    endOfWeek.getDate()+' '+MONTHS[endOfWeek.getMonth()]+' '+endOfWeek.getFullYear();
   const strip=document.getElementById('week-strip');
   strip.innerHTML='';
   for(let i=0;i<7;i++){
@@ -2587,6 +2589,7 @@ function renderCalendar(){
   document.getElementById('ag-day-label').textContent=DAY_NAMES[sd.getDay()]+' '+sd.getDate()+' '+MONTHS[sd.getMonth()];
   renderSessions();
 }
+function goToToday(){currentWeekMonday=mondayOf(TODAY);selectedDate=isoDate(TODAY);renderCalendar();}
 function shiftWeek(dir){currentWeekMonday=addDays(currentWeekMonday,dir*7);renderCalendar();}
 function renderSessions(){
   const typeLabel={individual:'individual',pareja:'parella',grupo:'grup'};
@@ -2838,8 +2841,20 @@ function selSessType(type){
   const hints={individual:'Selecciona 1 client',pareja:'Selecciona exactament 2 clients',grupo:'Selecciona entre 2 i 4 clients'};
   document.getElementById('sf-client-hint').textContent=hints[type];
 }
+function filterSfClientList(q){
+  const items=document.querySelectorAll('#sf-client-list .client-select-item');
+  items.forEach(item=>{
+    const id=parseInt(item.id.replace('csel-',''));
+    const cl=getClient(id);
+    const name=cl?clientName(cl).toLowerCase():'';
+    item.style.display=!q||name.includes(q.toLowerCase())?'':'none';
+  });
+}
 function renderClientSelectList(){
   const list=document.getElementById('sf-client-list');
+  // Reset search
+  const search=document.getElementById('sf-client-search');
+  if(search) search.value='';
   list.innerHTML=clients.map(c=>`
     <div class="client-select-item" id="csel-${c.id}" onclick="toggleClientSel(${c.id})">
       <input type="checkbox" id="cselcb-${c.id}" onchange="toggleClientSel(${c.id})">
@@ -3561,18 +3576,21 @@ function openClientDetail(id){
   const sessWithNotes=clientSessions.filter(s=>s.notes&&s.notes.trim()).length;
   const typeLabel={individual:'Individual',pareja:'Parella',grupo:'Grup'};
   // Build history
-  const histHTML=clientSessions.length?clientSessions.map(s=>`
-    <div class="hist-item" onclick="openSessionDetail(${s.id});gotoTab('agenda',1)" style="cursor:pointer">
-      <div class="hist-top">
+  const histHTML=clientSessions.length?clientSessions.map(s=>{
+    const hasBlocks=s.blocks&&s.blocks.length;
+    return `<div class="hist-item" style="cursor:pointer">
+      <div class="hist-top" onclick="openSessionDetail(${s.id});gotoTab('agenda',1)">
         <span class="hist-date">${fmtDate(s.date)} · ${s.t}</span>
         <div style="display:flex;gap:5px;align-items:center">
           <span class="badge badge-${s.type}" style="font-size:10px">${typeLabel[s.type]}</span>
           <span class="badge badge-${s.status==='done'?'done':'pend'}">${s.status==='done'?'feta':'pendent'}</span>
+          ${hasBlocks?`<button onclick="event.stopPropagation();openWorkoutView(${s.id})" style="background:#E6F1FB;border:none;border-radius:6px;padding:2px 7px;font-size:13px;cursor:pointer;line-height:1">💪</button>`:''}
         </div>
       </div>
-      <div style="font-size:11px;color:#888780">${s.dur}${s.preu?' · '+s.preu+'€':''}${s.exercises&&s.exercises.length?' · '+s.exercises.length+' exercicis':''}</div>
+      <div style="font-size:11px;color:#888780" onclick="openSessionDetail(${s.id});gotoTab('agenda',1)">${s.dur}${s.preu?' · '+s.preu+'€':''}${hasBlocks?' · '+s.blocks.reduce((a,b)=>a+(b.exercises||[]).length,0)+' ex.':''}</div>
       ${s.notes?`<div class="hist-note">📝 ${s.notes}</div>`:`<div class="hist-no-note">Sense notes</div>`}
-    </div>`).join('')
+    </div>`;
+  }).join('')
     :'<div style="font-size:12px;color:#888780;padding:10px 0">Cap sessió registrada</div>';
 
   document.getElementById('client-detail').innerHTML=`
