@@ -1552,8 +1552,9 @@ function initSessionBlocks(){
   sessionBlocks=[];
 }
 
-function openWorkoutPlanner(){
+function openWorkoutPlanner(clientIds){
   window._plannerMode=null;
+  window._plannerClientIds=clientIds||[];
   // Create or reuse planner modal
   let modal=document.getElementById('workout-planner-modal');
   if(!modal){
@@ -1644,9 +1645,7 @@ function renderWorkoutPlanner(modal){
   }
 
   // Repeat session / history section
-  const currentClientIds=(()=>{
-    try{return Array.from(document.querySelectorAll('.csel-cb:checked')).map(cb=>parseInt(cb.dataset.id)).filter(Boolean);}catch(e){return[];}
-  })();
+  const currentClientIds=window._plannerClientIds||[];
   if(currentClientIds.length){
     const pastSessions=sessions.filter(s=>{
       if(!s.clientIds||!s.clientIds.length) return false;
@@ -1940,7 +1939,10 @@ function renderSessionBlocks(){
   });
 }
 
-function addSessionBlock(){openWorkoutPlanner();}
+function addSessionBlock(){
+  const ids=Array.from(document.querySelectorAll('.csel-cb:checked')).map(cb=>parseInt(cb.dataset.id)).filter(Boolean);
+  openWorkoutPlanner(ids);
+}
 function openBlockExPicker(blockIdx){openWorkoutPlanner();}
 
 // ── WORKOUT VIEW ──
@@ -2756,7 +2758,7 @@ function openSessionDetail(id){
     window._editingSessionId=sid;
     const sess=sessions.find(x=>x.id===sid);
     sessionBlocks=sess&&sess.blocks?JSON.parse(JSON.stringify(sess.blocks)):[];
-    openWorkoutPlanner();
+    openWorkoutPlanner(sess?sess.clientIds:[]);
   })(id);
   actions.appendChild(editBtn);
 
