@@ -4156,8 +4156,9 @@ function renderTemplates(){
     return;
   }
   el.innerHTML=templates.map(tpl=>{
+    try{
     const blocks=tpl.blocks||[];
-    const total=blocks.reduce((a,b)=>a+b.exercises.length,0);
+    const total=blocks.reduce((a,b)=>a+(b.exercises||[]).length,0);
     const pills=blocks.map(b=>{
       const col=b.systemColor||'#185FA5';
       return `<span style="background:${col}22;color:${col};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">${b.systemNom||'Bloc'} (${b.exercises.length})</span>`;
@@ -4170,9 +4171,10 @@ function renderTemplates(){
           <button class="icon-btn" style="color:#E24B4A" onclick="deleteTemplate(${tpl.id})">✕</button>
         </div>
       </div>
-      <div style="font-size:11px;color:#888780;margin-bottom:6px">${tpl.exercises.length} exercici${tpl.exercises.length!==1?'s':''}</div>
+      <div style="font-size:11px;color:#888780;margin-bottom:6px">${total} exercici${total!==1?'s':''} · ${blocks.length} bloc${blocks.length!==1?'s':''}</div>
       <div class="tpl-card-pills">${pills}</div>
     </div>`;
+    }catch(e){return '';}
   }).join('');
 }
 function renderTplGroupChips(){
