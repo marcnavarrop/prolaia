@@ -1618,35 +1618,50 @@ function renderWorkoutPlanner(modal){
   const content=document.createElement('div');
   content.style.cssText='flex:1;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px;padding-bottom:80px;display:flex;flex-direction:column;gap:12px;min-height:0';
 
-  // Templates section (if any exist)
-  if(templates&&templates.length){
-    const tplSection=document.createElement('div');
-    tplSection.style.cssText='background:#FFF9ED;border:0.5px solid #F5C842;border-radius:10px;padding:10px 13px;flex-shrink:0';
-    const tplTitle=document.createElement('div');
-    tplTitle.style.cssText='font-size:11px;font-weight:600;color:#7A5F00;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px';
-    tplTitle.textContent='★ Aplicar plantilla';
-    tplSection.appendChild(tplTitle);
-    const tplRow=document.createElement('div');tplRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
-    templates.forEach(tpl=>{
-      const btn=document.createElement('button');
-      btn.style.cssText='padding:5px 12px;border-radius:16px;border:1px solid #F5C842;background:#fff;color:#7A5F00;font-size:12px;cursor:pointer;font-family:inherit';
-      btn.textContent=tpl.nom;
-      btn.onclick=(t=>()=>{
-        if(sessionBlocks.length&&!confirm('Aplicar la plantilla "'+t.nom+'"? Els blocs actuals es substituiran.')) return;
-        sessionBlocks=(t.blocks||[]).map(b=>({...JSON.parse(JSON.stringify(b)),_expanded:false}));
-        if(sessionBlocks.length) sessionBlocks[sessionBlocks.length-1]._expanded=true;
-        renderWorkoutPlanner(modal);
-        toast('✓ Plantilla aplicada');
-      })(tpl);
-      tplRow.appendChild(btn);
-    });
-    tplSection.appendChild(tplRow);
-    content.appendChild(tplSection);
+  // ── Collapsible top sections ──
+  function makeCollapsible(title,color,borderColor,buildFn){
+    const wrap=document.createElement('div');
+    wrap.style.cssText='border:0.5px solid '+borderColor+';border-radius:10px;overflow:hidden;flex-shrink:0';
+    const hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:'+color+';cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none';
+    const lbl=document.createElement('span');lbl.style.cssText='font-size:11px;font-weight:600;color:#2C2C2A;text-transform:uppercase;letter-spacing:0.4px';lbl.textContent=title;
+    const arrow=document.createElement('span');arrow.style.cssText='font-size:12px;color:#888780;transition:transform 0.2s';arrow.textContent='▾';
+    hdr.appendChild(lbl);hdr.appendChild(arrow);
+    const body=document.createElement('div');
+    body.style.cssText='display:none;padding:10px 13px;background:#fff';
+    hdr.onclick=()=>{
+      const open=body.style.display!=='none';
+      body.style.display=open?'none':'block';
+      arrow.style.transform=open?'rotate(0deg)':'rotate(-180deg)';
+    };
+    buildFn(body);
+    wrap.appendChild(hdr);wrap.appendChild(body);
+    return wrap;
   }
 
-  // Repeat session / history section
-  const currentClientIds=window._plannerClientIds||[];
-  if(currentClientIds.length){
+  // Templates
+  if(templates&&templates.length){
+    const tplWrap=makeCollapsible('\u2605 Plantilles','#FFF9ED','#F5C842',body=>{
+      const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+      templates.forEach(tpl=>{
+        const btn=document.createElement('button');
+        btn.style.cssText='padding:5px 12px;border-radius:16px;border:1px solid #F5C842;background:#FFF9ED;color:#7A5F00;font-size:12px;cursor:pointer;font-family:inherit';
+        btn.textContent=tpl.nom;
+        btn.onclick=(t=>()=>{
+          if(sessionBlocks.length&&!confirm('Aplicar la plantilla "'+t.nom+'"? Els blocs actuals es substituiran.')) return;
+          sessionBlocks=(t.blocks||[]).map((b,i)=>({...JSON.parse(JSON.stringify(b)),_expanded:i===0}));
+          renderWorkoutPlanner(modal);
+          toast('\u2713 Plantilla aplicada');
+        })(tpl);
+        row.appendChild(btn);
+      });
+      body.appendChild(row);
+    });
+    content.appendChild(tplWrap);
+  }
+
+  // History
+  if(currentClientIds&&currentClientIds.length){
     const pastSessions=sessions.filter(s=>{
       if(!s.clientIds||!s.clientIds.length) return false;
       if(s.status==='cancel') return false;
@@ -1654,77 +1669,70 @@ function renderWorkoutPlanner(modal){
       return currentClientIds.some(id=>s.clientIds.includes(id));
     }).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
     if(pastSessions.length){
-      const repSection=document.createElement('div');
-      repSection.style.cssText='background:#EEF4FF;border:0.5px solid #B5D4F4;border-radius:10px;padding:10px 13px;flex-shrink:0';
-      const repTitle=document.createElement('div');
-      repTitle.style.cssText='font-size:11px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px';
-      repTitle.textContent='↺ Històric de sessions';
-      repSection.appendChild(repTitle);
-      pastSessions.forEach(s=>{
-        const totalEx=s.blocks.reduce((a,b)=>a+(b.exercises||[]).length,0);
-        const blockNames=s.blocks.map(b=>b.systemNom||'Bloc').join(' + ');
-        const card=document.createElement('div');
-        card.style.cssText='background:#fff;border-radius:9px;margin-bottom:6px;border:0.5px solid #D3D1C7;overflow:hidden';
-        // Header row
-        const cardHdr=document.createElement('div');
-        cardHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer';
-        cardHdr.innerHTML='<div>'
-          +'<div style="font-size:12px;font-weight:500;color:#2C2C2A">'+fmtDate(s.date)+' · '+s.t+'</div>'
-          +'<div style="font-size:11px;color:#888780;margin-top:1px">'+blockNames+' · '+totalEx+' ex.</div>'
-          +'</div>'
-          +'<div style="display:flex;gap:6px;align-items:center">';
-        // Preview toggle
-        const previewBtn=document.createElement('button');
-        previewBtn.style.cssText='font-size:11px;padding:3px 9px;border-radius:12px;border:0.5px solid #B5D4F4;background:#EEF4FF;color:#185FA5;cursor:pointer;font-family:inherit;white-space:nowrap';
-        previewBtn.textContent='Veure';
-        const previewArea=document.createElement('div');
-        previewArea.style.cssText='display:none;padding:0 12px 10px;border-top:0.5px solid #EDECEA';
-        previewBtn.onclick=(e)=>{
-          e.stopPropagation();
-          const open=previewArea.style.display!=='none';
-          previewArea.style.display=open?'none':'block';
-          previewBtn.textContent=open?'Veure':'Tancar';
-          if(!open){
-            previewArea.innerHTML='';
-            s.blocks.forEach(block=>{
-              const bHdr=document.createElement('div');
-              bHdr.style.cssText='display:flex;align-items:center;gap:6px;padding:7px 0 4px;border-bottom:0.5px solid #F0EEE8';
-              const dot=document.createElement('div');dot.style.cssText='width:8px;height:8px;border-radius:50%;background:'+(block.systemColor||'#185FA5')+';flex-shrink:0';
-              const lbl=document.createElement('span');lbl.style.cssText='font-size:11px;font-weight:600;color:'+(block.systemColor||'#185FA5')+';text-transform:uppercase';
-              lbl.textContent=block.systemNom||'Bloc';
-              const mes=block.repsText||block.secsText?document.createElement('span'):null;
-              if(mes){mes.style.cssText='font-size:10px;color:#888780;margin-left:4px';mes.textContent=[block.repsText,block.secsText].filter(Boolean).join(' / ');}
-              bHdr.appendChild(dot);bHdr.appendChild(lbl);if(mes)bHdr.appendChild(mes);
-              previewArea.appendChild(bHdr);
-              (block.exercises||[]).forEach((ex,i)=>{
-                const row=document.createElement('div');
-                row.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#2C2C2A';
-                row.innerHTML='<span style="color:#B4B2A9;min-width:16px;font-size:10px">'+(i+1)+'.</span>'
-                  +'<span style="flex:1">'+ex.nom+'</span>'
-                  +(ex.sets?'<span style="font-size:11px;color:#185FA5;font-weight:500">'+ex.sets+'</span>':'');
-                previewArea.appendChild(row);
+      const histWrap=makeCollapsible('\u21ba Hist\u00f2ric sessions ('+pastSessions.length+')','#EEF4FF','#B5D4F4',body=>{
+        pastSessions.forEach(s=>{
+          const totalEx=s.blocks.reduce((a,b)=>a+(b.exercises||[]).length,0);
+          const blockNames=s.blocks.map(b=>b.systemNom||'Bloc').join(' + ');
+          const card=document.createElement('div');
+          card.style.cssText='border:0.5px solid #D3D1C7;border-radius:8px;overflow:hidden;margin-bottom:6px';
+          // Card header
+          const cardHdr=document.createElement('div');
+          cardHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#F8F6F2;cursor:pointer';
+          const info=document.createElement('div');
+          info.innerHTML='<div style="font-size:12px;font-weight:500;color:#2C2C2A">'+fmtDate(s.date)+' \u00b7 '+s.t+'</div>'
+            +'<div style="font-size:10px;color:#888780">'+blockNames+' \u00b7 '+totalEx+' ex.</div>';
+          const btns=document.createElement('div');btns.style.cssText='display:flex;gap:5px;align-items:center';
+          const previewBtn=document.createElement('button');
+          previewBtn.style.cssText='font-size:10px;padding:2px 8px;border-radius:10px;border:0.5px solid #B5D4F4;background:#EEF4FF;color:#185FA5;cursor:pointer;font-family:inherit';
+          previewBtn.textContent='Veure';
+          const copyBtn=document.createElement('button');
+          copyBtn.style.cssText='font-size:10px;padding:2px 8px;border-radius:10px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-family:inherit';
+          copyBtn.textContent='\u21ba Copiar';
+          // Preview area
+          const previewArea=document.createElement('div');
+          previewArea.style.cssText='display:none;padding:8px 10px;border-top:0.5px solid #EDECEA';
+          previewBtn.onclick=(e)=>{
+            e.stopPropagation();
+            const open=previewArea.style.display!=='none';
+            previewArea.style.display=open?'none':'block';
+            previewBtn.textContent=open?'Veure':'Tancar';
+            if(!open){
+              previewArea.innerHTML='';
+              s.blocks.forEach(block=>{
+                const bHdr=document.createElement('div');
+                bHdr.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 0 3px;border-bottom:0.5px solid #F0EEE8';
+                const dot=document.createElement('div');dot.style.cssText='width:7px;height:7px;border-radius:50%;background:'+(block.systemColor||'#185FA5')+';flex-shrink:0';
+                const lbl2=document.createElement('span');lbl2.style.cssText='font-size:11px;font-weight:600;color:'+(block.systemColor||'#185FA5')+';text-transform:uppercase';
+                lbl2.textContent=block.systemNom||'Bloc';
+                const mes=[block.repsText,block.secsText].filter(Boolean).join(' / ');
+                if(mes){const m=document.createElement('span');m.style.cssText='font-size:10px;color:#888780';m.textContent=mes;bHdr.appendChild(dot);bHdr.appendChild(lbl2);bHdr.appendChild(m);}
+                else{bHdr.appendChild(dot);bHdr.appendChild(lbl2);}
+                previewArea.appendChild(bHdr);
+                (block.exercises||[]).forEach((ex,i)=>{
+                  const row=document.createElement('div');
+                  row.style.cssText='display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;color:#2C2C2A';
+                  row.innerHTML='<span style="color:#B4B2A9;min-width:14px;font-size:10px">'+(i+1)+'.</span>'
+                    +'<span style="flex:1">'+ex.nom+'</span>'
+                    +(ex.sets?'<span style="font-size:11px;color:#185FA5;font-weight:500">'+ex.sets+'</span>':'');
+                  previewArea.appendChild(row);
+                });
               });
-            });
-          }
-        };
-        // Copy button
-        const copyBtn=document.createElement('button');
-        copyBtn.style.cssText='font-size:11px;padding:3px 9px;border-radius:12px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap';
-        copyBtn.textContent='↺ Copiar';
-        copyBtn.onclick=(sess=>e=>{
-          e.stopPropagation();
-          if(sessionBlocks.length&&!confirm('Copiar aquesta sessió? Els blocs actuals es substituiran.')) return;
-          sessionBlocks=JSON.parse(JSON.stringify(sess.blocks)).map((b,i)=>({...b,_expanded:i===0}));
-          renderWorkoutPlanner(modal);
-          toast('✓ Sessió copiada');
-        })(s);
-        const btnWrap=cardHdr.querySelector('div:last-child');
-        btnWrap.appendChild(previewBtn);btnWrap.appendChild(copyBtn);
-        card.appendChild(cardHdr);
-        card.appendChild(previewArea);
-        repSection.appendChild(card);
+            }
+          };
+          copyBtn.onclick=(sess=>e=>{
+            e.stopPropagation();
+            if(sessionBlocks.length&&!confirm('Copiar aquesta sessi\u00f3? Els blocs actuals es substituiran.')) return;
+            sessionBlocks=JSON.parse(JSON.stringify(sess.blocks)).map((b,i)=>({...b,_expanded:i===0}));
+            renderWorkoutPlanner(modal);
+            toast('\u2713 Sessi\u00f3 copiada');
+          })(s);
+          btns.appendChild(previewBtn);btns.appendChild(copyBtn);
+          cardHdr.appendChild(info);cardHdr.appendChild(btns);
+          card.appendChild(cardHdr);card.appendChild(previewArea);
+          body.appendChild(card);
+        });
       });
-      content.appendChild(repSection);
+      content.appendChild(histWrap);
     }
   }
 
