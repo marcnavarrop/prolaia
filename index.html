@@ -2785,6 +2785,34 @@ function toggleStatus(id){
 }
 function deleteSession(id){
   openConfirm('Eliminar sessió','Segur que vols eliminar aquesta sessió?','Eliminar',()=>{
+    const s=sessions.find(x=>x.id===id);
+    // Remove weight log entries from clients if session was done
+    if(s&&s.status==='done'&&s.blocks&&s.blocks.length){
+      (s.clientIds||[]).forEach(cid=>{
+        const cl=clients.find(x=>x.id===cid);
+        if(!cl||!cl.weightLog) return;
+        // Get exercise names from this session that had kg
+        const sessExNames=new Set();
+        s.blocks.forEach(block=>{
+          (block.exercises||[]).forEach(ex=>{
+            if(ex.ambPes&&ex.kg) sessExNames.add(ex.nom);
+          });
+        });
+        // For each exercise in this session, check if there's a more recent session
+        // with the same exercise. If not, remove the weight log entry.
+        sessExNames.forEach(nom=>{
+          const hasNewerSess=sessions.some(other=>
+            other.id!==id&&
+            other.status==='done'&&
+            (other.clientIds||[]).includes(cid)&&
+            (other.blocks||[]).some(b=>(b.exercises||[]).some(e=>e.nom===nom&&e.ambPes&&e.kg))
+          );
+          if(!hasNewerSess){
+            cl.weightLog=cl.weightLog.filter(w=>w.nom!==nom);
+          }
+        });
+      });
+    }
     sessions=sessions.filter(s=>s.id!==id);
     lsSave();renderSessions();renderHomeToday();updateHomeStats();renderCalendar();
     toast('Sessió eliminada');
