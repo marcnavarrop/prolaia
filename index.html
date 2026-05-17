@@ -1850,8 +1850,10 @@ function renderPlannerBlock(container,block,bi,modal){
       setsIn.style.cssText='width:55px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:3px 5px;font-family:inherit;flex-shrink:0';
       setsIn.oninput=((b,e)=>function(){sessionBlocks[b].exercises[e].sets=this.value;})(bi,ei);
       row.appendChild(num);row.appendChild(name);row.appendChild(setsIn);
-      // Kg field if exercise has weight
-      if(ex.ambPes){
+      // Kg field if exercise has weight (check both stored and exerciseDB)
+      const exDef=Object.values(exerciseDB).flat().find(e=>(e.nom||e)===ex.nom);
+      const hasWeight=ex.ambPes||(exDef&&exDef.ambPes);
+      if(hasWeight){
         const kgIn=document.createElement('input');kgIn.value=ex.kg||'';
         kgIn.placeholder='kg';
         kgIn.style.cssText='width:45px;font-size:12px;text-align:center;border:0.5px solid #F5A623;border-radius:6px;padding:3px 5px;font-family:inherit;flex-shrink:0;background:#FFFBF0';
@@ -1919,7 +1921,15 @@ function renderPlannerBlock(container,block,bi,modal){
       setsIn.style.cssText='width:52px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:4px 5px;font-family:inherit;flex-shrink:0;outline:none;background:#F8F6F2';
       setsIn.onclick=(ev)=>ev.stopPropagation();
       setsIn.oninput=()=>{const ex2=sessionBlocks[bi].exercises.find(x=>x.nom===ex.nom);if(ex2)ex2.sets=setsIn.value;};
-      row.appendChild(info);row.appendChild(setsIn);row.appendChild(icon);
+      // kg badge in library
+      if(ex.ambPes){
+        const kgBadge=document.createElement('span');
+        kgBadge.style.cssText='font-size:9px;padding:2px 6px;border-radius:4px;background:#FFFBF0;color:#854F0B;border:0.5px solid #F5A623;flex-shrink:0;white-space:nowrap';
+        kgBadge.textContent='kg';
+        row.appendChild(info);row.appendChild(kgBadge);row.appendChild(setsIn);row.appendChild(icon);
+      } else {
+        row.appendChild(info);row.appendChild(setsIn);row.appendChild(icon);
+      }
       const addEx=(curEx)=>()=>{
         if(!sessionBlocks[bi].exercises.some(x=>x.nom===curEx.nom)){
           // Get last kg for this client/exercise
@@ -1932,7 +1942,9 @@ function renderPlannerBlock(container,block,bi,modal){
               if(entry) lastKg=entry.kg;
             }
           }
-          sessionBlocks[bi].exercises.push({nom:curEx.nom,sets:setsIn.value||'',mesura:curEx.mesura||'reps',ambPes:curEx.ambPes||false,kg:lastKg});
+          const exDef2=Object.values(exerciseDB).flat().find(e=>(e.nom||e)===curEx.nom);
+          const isWeighted=curEx.ambPes||(exDef2&&exDef2.ambPes)||false;
+          sessionBlocks[bi].exercises.push({nom:curEx.nom,sets:setsIn.value||'',mesura:curEx.mesura||'reps',ambPes:isWeighted,kg:lastKg});
           row.style.background='#F0FFF8';
           icon.textContent='✓';icon.style.color='#1D9E75';
           setsIn.style.background='#E8F7F0';
