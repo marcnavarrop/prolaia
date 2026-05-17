@@ -1921,15 +1921,22 @@ function renderPlannerBlock(container,block,bi,modal){
       setsIn.style.cssText='width:52px;font-size:12px;text-align:center;border:0.5px solid #D3D1C7;border-radius:6px;padding:4px 5px;font-family:inherit;flex-shrink:0;outline:none;background:#F8F6F2';
       setsIn.onclick=(ev)=>ev.stopPropagation();
       setsIn.oninput=()=>{const ex2=sessionBlocks[bi].exercises.find(x=>x.nom===ex.nom);if(ex2)ex2.sets=setsIn.value;};
-      // kg badge in library
+      row.appendChild(info);
+      // kg input in library (visible when ambPes)
       if(ex.ambPes){
-        const kgBadge=document.createElement('span');
-        kgBadge.style.cssText='font-size:9px;padding:2px 6px;border-radius:4px;background:#FFFBF0;color:#854F0B;border:0.5px solid #F5A623;flex-shrink:0;white-space:nowrap';
-        kgBadge.textContent='kg';
-        row.appendChild(info);row.appendChild(kgBadge);row.appendChild(setsIn);row.appendChild(icon);
-      } else {
-        row.appendChild(info);row.appendChild(setsIn);row.appendChild(icon);
+        const kgInLib=document.createElement('input');
+        const existingEx=block.exercises.find(x=>x.nom===ex.nom);
+        kgInLib.value=existingEx?existingEx.kg||'':'';
+        kgInLib.placeholder='kg';
+        kgInLib.style.cssText='width:42px;font-size:12px;text-align:center;border:0.5px solid #F5A623;border-radius:6px;padding:3px 5px;font-family:inherit;flex-shrink:0;background:#FFFBF0;outline:none';
+        kgInLib.onclick=(e)=>e.stopPropagation();
+        kgInLib.oninput=()=>{
+          const ex2=sessionBlocks[bi].exercises.find(x=>x.nom===ex.nom);
+          if(ex2) ex2.kg=kgInLib.value;
+        };
+        row.appendChild(kgInLib);
       }
+      row.appendChild(setsIn);row.appendChild(icon);
       const addEx=(curEx)=>()=>{
         if(!sessionBlocks[bi].exercises.some(x=>x.nom===curEx.nom)){
           // Get last kg for this client/exercise
@@ -1944,7 +1951,10 @@ function renderPlannerBlock(container,block,bi,modal){
           }
           const exDef2=Object.values(exerciseDB).flat().find(e=>(e.nom||e)===curEx.nom);
           const isWeighted=curEx.ambPes||(exDef2&&exDef2.ambPes)||false;
-          sessionBlocks[bi].exercises.push({nom:curEx.nom,sets:setsIn.value||'',mesura:curEx.mesura||'reps',ambPes:isWeighted,kg:lastKg});
+          // Read kg from the inline input if present
+          const kgInputEl=row.querySelector('input[placeholder="kg"]');
+          const kgVal=kgInputEl?kgInputEl.value||lastKg:lastKg;
+          sessionBlocks[bi].exercises.push({nom:curEx.nom,sets:setsIn.value||'',mesura:curEx.mesura||'reps',ambPes:isWeighted,kg:kgVal});
           row.style.background='#F0FFF8';
           icon.textContent='✓';icon.style.color='#1D9E75';
           setsIn.style.background='#E8F7F0';
