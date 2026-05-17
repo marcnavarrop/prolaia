@@ -1324,18 +1324,51 @@ const SB_URL='https://cvjxfaxbszhuztrtjhig.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2anhmYXhic3podXp0cnRqaGlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDU0MTIsImV4cCI6MjA5MzEyMTQxMn0.L0ey8Q2me1i-x3m0iwyAMDnRFwSBXKxMeHvvaul0L8g';
 // ══════════════════════════════════════
 
+async function refreshAuthToken(){
+  const rt=sessionStorage.getItem('prolaia_refresh_token');
+  if(!rt) return false;
+  try{
+    const res=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({refresh_token:rt})
+    });
+    const data=await res.json();
+    if(data.access_token){
+      authToken=data.access_token;
+      sessionStorage.setItem('prolaia_token',authToken);
+      if(data.refresh_token) sessionStorage.setItem('prolaia_refresh_token',data.refresh_token);
+      return true;
+    }
+  }catch(e){console.warn('Token refresh error:',e);}
+  return false;
+}
+
 async function sbFetch(path,method,body){
   try{
     const isUpsert=path.includes('on_conflict');
-    const headers={
-      'apikey':SB_KEY,
-      'Authorization':'Bearer '+(authToken||SB_KEY),
-      'Content-Type':'application/json',
-      'Prefer':isUpsert?'resolution=merge-duplicates':'return=minimal'
-    };
-    const opts={method:method||'GET',headers};
-    if(body) opts.body=JSON.stringify(body);
-    const res=await fetch(SB_URL+'/rest/v1/'+path,opts);
+    const makeOpts=(token)=>({
+      method:method||'GET',
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+(token||SB_KEY),
+        'Content-Type':'application/json',
+        'Prefer':isUpsert?'resolution=merge-duplicates':'return=minimal'
+      },
+      ...(body?{body:JSON.stringify(body)}:{})
+    });
+    let res=await fetch(SB_URL+'/rest/v1/'+path,makeOpts(authToken));
+    // If 401, try to refresh token once
+    if(res.status===401){
+      const refreshed=await refreshAuthToken();
+      if(refreshed){
+        res=await fetch(SB_URL+'/rest/v1/'+path,makeOpts(authToken));
+      } else {
+        // Token can't be refreshed - force re-login
+        showSaveStatus('offline');
+        return null;
+      }
+    }
     if(!res.ok){const t=await res.text();console.warn('Supabase error:',res.status,t);return null;}
     const text=await res.text();
     return text?JSON.parse(text):null;
@@ -1432,6 +1465,25 @@ window.addEventListener('offline',()=>{
   if(bar) bar.style.display='flex';
   document.querySelector('.app').style.paddingTop='34px';
 });
+
+// Auto-sync when user returns to tab (keeps data live between devices)
+let _lastSyncTime=0;
+function _autoSync(){
+  if(!authToken||!sbOnline) return;
+  const now=Date.now();
+  if(now-_lastSyncTime<30000) return; // max once per 30s
+  _lastSyncTime=now;
+  sbLoad().then(ok=>{if(ok){lsSave();refreshAll();}});
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible') _autoSync();
+});
+window.addEventListener('focus',()=>_autoSync());
+
+// Proactive token refresh every 50 minutes (token expires after 1h)
+setInterval(()=>{
+  if(authToken) refreshAuthToken();
+},50*60*1000);
 function scheduleSbSave(){
   if(window.location.protocol==='file:') return;
   clearTimeout(sbSaveTimer);
@@ -5556,6 +5608,7 @@ async function doLogin(){
     authToken=data.access_token;
     authUser=data.user;
     sessionStorage.setItem('prolaia_token',authToken);
+    sessionStorage.setItem('prolaia_refresh_token',data.refresh_token||'');
     sessionStorage.setItem('prolaia_user',JSON.stringify(authUser));
     const screen=document.getElementById('login-screen');
     const isFirst=!localStorage.getItem('prolaia_welcomed');
