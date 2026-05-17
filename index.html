@@ -1926,7 +1926,19 @@ function renderPlannerBlock(container,block,bi,modal){
       if(ex.ambPes){
         const kgInLib=document.createElement('input');
         const existingEx=block.exercises.find(x=>x.nom===ex.nom);
-        kgInLib.value=existingEx?existingEx.kg||'':'';
+        // Get last kg: first from current block, then from client weight log
+        let defaultKg=existingEx?existingEx.kg||'':'';
+        if(!defaultKg){
+          const planClientIds=window._plannerClientIds||[];
+          if(planClientIds.length){
+            const cl=getClient(planClientIds[0]);
+            if(cl&&cl.weightLog){
+              const wEntry=cl.weightLog.find(w=>w.nom===ex.nom);
+              if(wEntry) defaultKg=wEntry.kg;
+            }
+          }
+        }
+        kgInLib.value=defaultKg;
         kgInLib.placeholder='kg';
         kgInLib.style.cssText='width:42px;font-size:12px;text-align:center;border:0.5px solid #F5A623;border-radius:6px;padding:3px 5px;font-family:inherit;flex-shrink:0;background:#FFFBF0;outline:none';
         kgInLib.onclick=(e)=>e.stopPropagation();
